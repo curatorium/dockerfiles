@@ -22,14 +22,14 @@ neurony/php-fpm\:%: php.Dockerfile tools/phive
 					--build-arg "BASE=phpdockerio/php$(strip $(subst .,, $*))-fpm"										\
 					.																									\
 	;
-neurony/php-qa\:%: php-qa.Dockerfile neurony/php-cli\:% tools/local-php-security-checker tools/wait-until
+neurony/php-qa\:%: php-qa.Dockerfile neurony/php-fpm\:% node/nodesource.gpg node/nodesource.list tools/local-php-security-checker tools/wait-until
 	docker build	--file $<																							\
 					--tag $@																							\
 					--build-arg VS=$*																					\
 					--build-arg "BASE=$(word 2, $^)"																	\
 					.																									\
 	;
-neurony/php-dev\:%: php-dev.Dockerfile neurony/php-qa\:% docker/docker.gpg docker/docker.list
+neurony/php-dev\:%: php-dev.Dockerfile neurony/php-qa\:% docker/docker.gpg docker/docker.list tools/php-serve
 	docker build	--file $<																							\
 					--tag $@																							\
 					--build-arg VS=$*																					\
@@ -69,3 +69,6 @@ docker/docker.gpg:
 	curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o $@;
 docker/docker.list:
 	echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu XYZXYZXYZ stable" > $@;
+
+node/nodesource.gpg:
+	curl -fsSL https://deb.nodesource.com/gpgkey/nodesource.gpg.key | gpg --dearmor -o $@;

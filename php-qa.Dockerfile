@@ -1,13 +1,19 @@
 ARG BASE
 FROM $BASE
 
+COPY node/nodesource.gpg				/usr/share/keyrings/
+COPY node/nodesource.list				./
 COPY tools/local-php-security-checker	/usr/local/bin/
 COPY tools/wait-until					/usr/local/bin/
 
 ARG VS
-RUN apt-get update																										\
- && apt-get install -y --no-install-recommends																			\
+RUN apt-get update && apt-get install -y --no-install-recommends														\
+		lsb-release																										\
+ && sed "s/XYZXYZXYZ/$(lsb_release -cs)/" nodesource.list > /etc/apt/sources.list.d/nodesource.list						\
+ && apt-get update && apt-get install -y --no-install-recommends														\
+		gettext																											\
 		git																												\
+		nodejs																											\
 		php$VS-pcov																										\
  && apt-get autoremove --purge																							\
  && apt-get clean																										\

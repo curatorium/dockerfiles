@@ -1,8 +1,9 @@
 ARG BASE
 FROM $BASE
 
-COPY docker/docker.gpg		/usr/share/keyrings/
-COPY docker/docker.list		./
+COPY docker/docker.gpg	/usr/share/keyrings/
+COPY docker/docker.list	./
+COPY tools/php-serve	/usr/local/bin
 
 ARG VS
 RUN apt-get update && apt-get install -y --no-install-recommends														\
@@ -24,9 +25,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends														\
  && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /usr/share/doc/*														\
  && chmod +x /usr/local/bin/*																							\
  && phive --no-progress install -g --trust-gpg-keys FD5CFD96854EBC5D pipelines											\
+ && chmod +x /usr/local/bin/*																							\
 ;
 
 EXPOSE 80
-CMD if [ -d "public/" ]; then php -S 0.0.0.0:80 -t public/; else php -S 0.0.0.0:80; fi;
+CMD "php-serve"
 
 LABEL maintainer="Mihai Stancu <mihai.stancu@neurony.ro>"
