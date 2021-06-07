@@ -22,14 +22,14 @@ neurony/php-fpm\:%: php.Dockerfile tools/phive
 					--build-arg "BASE=phpdockerio/php$(strip $(subst .,, $*))-fpm"										\
 					.																									\
 	;
-neurony/php-qa\:%: php-qa.Dockerfile neurony/php-fpm\:% node/nodesource.gpg node/nodesource.list tools/local-php-security-checker tools/wait-until
+neurony/php-qa\:%: php-qa.Dockerfile neurony/php-fpm\:% tools/local-php-security-checker tools/wait-until
 	docker build	--file $<																							\
 					--tag $@																							\
 					--build-arg VS=$*																					\
 					--build-arg "BASE=$(word 2, $^)"																	\
 					.																									\
 	;
-neurony/php-dev\:%: php-dev.Dockerfile neurony/php-qa\:% docker/docker.gpg docker/docker.list tools/php-serve
+neurony/php-dev\:%: php-dev.Dockerfile neurony/php-qa\:% tools/php-serve
 	docker build	--file $<																							\
 					--tag $@																							\
 					--build-arg VS=$*																					\
@@ -64,11 +64,3 @@ tools/local-php-security-checker:
 	curl -sLf -o $@ "https://github.com/fabpot/local-php-security-checker//releases/download/v1.0.0/local-php-security-checker_1.0.0_linux_amd64";
 tools/wait-until:
 	curl -sLf https://raw.githubusercontent.com/nickjj/wait-until/v0.2.0/wait-until -o $@;
-
-docker/docker.gpg:
-	curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o $@;
-docker/docker.list:
-	echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu XYZXYZXYZ stable" > $@;
-
-node/nodesource.gpg:
-	curl -fsSL https://deb.nodesource.com/gpgkey/nodesource.gpg.key | gpg --dearmor -o $@;

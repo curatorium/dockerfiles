@@ -79,7 +79,6 @@ docker-compose -f /path/to/neurony-php-dockerfiles/docker-compose.yml run app pi
     - `phploc`
     - `phpunit`
     - `phplint`
-    - `paratest`
     - `nickjj/wait-until`
 
 #### DEV images
@@ -88,13 +87,11 @@ docker-compose -f /path/to/neurony-php-dockerfiles/docker-compose.yml run app pi
 - Based on the QA image
 - Tools:
     - `curl`
-    - `docker`
     - `git`
     - `jq`
     - `less`
     - `nano`
     - `php-phpdbg`
-    - `pipelines`
     - `wget`
 
 ----------------------------------------------------------------------
