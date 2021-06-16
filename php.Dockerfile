@@ -9,13 +9,15 @@ RUN mkdir ~/.gnupg && echo "disable-ipv6" >> ~/.gnupg/dirmngr.conf														
  && apt-get update																										\
  && apt-get install -y --no-install-recommends																			\
 		gifsicle																										\
+		imagemagick																										\
 		jpegoptim																										\
 		optipng																											\
 		php$VS-bcmath																									\
 		php$VS-intl																										\
 		php$VS-gd																										\
+		php$VS-imagick																									\
 		php$VS-memcached																								\
-		php$VS-mongodb    																								\
+		php$VS-mongodb																									\
 		php$VS-mysql																									\
 		php$VS-pgsql																									\
 		php$VS-redis																									\
@@ -29,6 +31,7 @@ RUN phpenmod																											\
 		bcmath																											\
 		intl																											\
 		gd																												\
+		imagick																											\
 		memcached																										\
 		mongodb																											\
 		pdo_mysql																										\
@@ -37,7 +40,7 @@ RUN phpenmod																											\
 		pdo_sqlite																										\
 ;
 
-RUN phive --no-progress install -g --trust-gpg-keys 9D8A98B29B2D5D79 phar-io/phive										\
+RUN phive --no-progress install -g --trust-gpg-keys 9D8A98B29B2D5D79 phar-io/phive@0.13.5								\
  && phive --no-progress install -g --trust-gpg-keys CBB3D576F2A0946F composer											\
 ;
 

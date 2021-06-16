@@ -2,7 +2,7 @@
 #	Docker build instructions via Dockerfile
 #
 
-neurony/php: 		neurony/php\:7.2		neurony/php\:7.3		neurony/php\:7.4		neurony/php\:8.0
+neurony/php:		neurony/php\:7.2		neurony/php\:7.3		neurony/php\:7.4		neurony/php\:8.0
 neurony/php\:7.2:	neurony/php-cli\:7.2	neurony/php-fpm\:7.2	neurony/php-qa\:7.2		neurony/php-dev\:7.2
 neurony/php\:7.3:	neurony/php-cli\:7.3	neurony/php-fpm\:7.3	neurony/php-qa\:7.3		neurony/php-dev\:7.3
 neurony/php\:7.4:	neurony/php-cli\:7.4	neurony/php-fpm\:7.4	neurony/php-qa\:7.4		neurony/php-dev\:7.4
