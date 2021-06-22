@@ -31,4 +31,8 @@ RUN composer global config --merge -- bin-dir /usr/local/bin															\
  && rm -fr /root/.cache/*																								\
 ;
 
+RUN curl -LsS https://codeception.com/codecept.phar -o /usr/local/bin/codecept											\
+ && chmod a+x /usr/local/bin/codecept																					\
+;
+
 LABEL maintainer="Mihai Stancu <mihai.stancu@neurony.ro>"
