@@ -48,8 +48,9 @@ docker-compose -f /path/to/neurony-php-dockerfiles/docker-compose.yml run app pi
 - Default CMD: `php`
 - PHP Extensions:
     - `php-bcmath`
-    - `php-gd`
+    - `php-imagick`
     - `php-intl`
+    - `php-gd`
     - `php-memcached`
     - `php-mongo`
     - `php-mysql`
@@ -57,8 +58,12 @@ docker-compose -f /path/to/neurony-php-dockerfiles/docker-compose.yml run app pi
     - `php-redis`
     - `php-sqlite`
 - Tools:
-    - `phive`
     - `composer`
+    - `imagemagick`
+    - `gifsicle`
+    - `jpegoptim`
+    - `optipng`
+    - `pngquant`
 
 #### FPM images
 - Images: [neurony/php-fpm:*](https://hub.docker.com/r/neurony/php-fpm)
@@ -72,28 +77,37 @@ docker-compose -f /path/to/neurony-php-dockerfiles/docker-compose.yml run app pi
 - PHP Extensions:
     - `php-pcov`
 - Tools:
-    - `composer-unused`
+    - `codeception`
     - `composer-require-checker`
+    - `composer-unused`
+    - `envsubst`
     - `infection`
     - `local-php-security-checker`
+    - `nodejs`
+    - `npm`
+    - `npx`
     - `phploc`
     - `phpunit`
     - `phplint`
+    - `phpstan`
+    - `psalm`
     - `nickjj/wait-until`
 
 #### DEV images
 - Images: - Images: [neurony/php-dev:*](https://hub.docker.com/r/neurony/php-dev)
 - Default CMD: `php -S 0.0.0.0:80` (exposes port `80`)
 - Based on the QA image
+- PHP Extensions:
+  - `php-xdebug`
+  - `php-yaml`
 - Tools:
-    - `curl`
+    - `curl` 
     - `git`
     - `jq`
     - `less`
     - `nano`
     - `php-phpdbg`
-    - `wget`
-
+  
 ----------------------------------------------------------------------
 
 ### Build the images

@@ -1,9 +1,6 @@
 ARG BASE
 FROM $BASE
 
-COPY tools/phive		/usr/local/bin/
-RUN  chmod +x			/usr/local/bin/*
-
 ARG VS
 RUN mkdir ~/.gnupg && echo "disable-ipv6" >> ~/.gnupg/dirmngr.conf														\
  && apt-get update																										\
@@ -13,9 +10,9 @@ RUN mkdir ~/.gnupg && echo "disable-ipv6" >> ~/.gnupg/dirmngr.conf														
 		jpegoptim																										\
 		optipng																											\
 		php$VS-bcmath																									\
+		php$VS-imagick																									\
 		php$VS-intl																										\
 		php$VS-gd																										\
-		php$VS-imagick																									\
 		php$VS-memcached																								\
 		php$VS-mongodb																									\
 		php$VS-mysql																									\
@@ -36,13 +33,13 @@ RUN phpenmod																											\
 		mongodb																											\
 		pdo_mysql																										\
 		pdo_pgsql																										\
-		redis																											\
 		pdo_sqlite																										\
+		redis																											\
 ;
 
-RUN phive --no-progress install -g --trust-gpg-keys 9D8A98B29B2D5D79 phar-io/phive@0.13.5								\
- && phive --no-progress install -g --trust-gpg-keys CBB3D576F2A0946F composer											\
-;
+COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
+ADD https://phar.io/releases/phive.phar /usr/local/bin/phive
+RUN chmod +x /usr/local/bin/*
 
 WORKDIR /app
 
