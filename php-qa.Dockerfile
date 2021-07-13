@@ -11,6 +11,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends														\
  && apt-get autoremove --purge && apt-get clean																			\
  && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /usr/share/doc/*														\
 ;
+RUN npm install -g yarn
 
 RUN phive --no-progress install -g --trust-gpg-keys F4D32E2C9343B2AE	composer-unused
 RUN phive --no-progress install -g --trust-gpg-keys C5095986493B4AA0	infection
