@@ -27,6 +27,8 @@ RUN composer global bin composer-require-checker	require maglnet/composer-requir
 RUN composer global bin phpunit						require phpunit/phpunit
 RUN composer global bin phpunit						require sebastian/phpcpd
 RUN composer global bin phpunit						require phploc/phploc
+RUN composer global bin phpunit						require brianium/paratest
+RUN composer global bin phpinsights					require nunomaduro/phpinsights
 RUN composer global bin phpstan						require phpstan/phpstan
 RUN composer global bin phpstan						require nunomaduro/larastan
 RUN composer global bin phpstan						require ekino/phpstan-banned-code
