@@ -1,0 +1,67 @@
+#!/bin/bash
+
+### BEGIN INIT var-dump
+# Provides:          var-dump
+# Short-Description: Var Dump Server
+# Description:       A server to receive and display debugging output.
+### END INIT var-dump
+
+function __status() {
+  if start-stop-daemon --pidfile /run/php/var-dump.pid --status; then
+    echo "var-dump running.            ";
+  else
+    echo "var-dump stopped.            ";
+  fi
+}
+
+function __start() {
+  echo -n "var-dump starting...         ";
+
+  CMD="/usr/local/bin/var-dump-server";
+  ARGS="";
+
+  if start-stop-daemon --user www-data --chdir /app --pidfile /run/php/var-dump.pid --make-pidfile --start --background --no-close --exec $CMD -- $ARGS > /proc/1/fd/1; then
+    echo -e "\rvar-dump started.            ";
+  else
+    echo -e "\rvar-dump failed to start.    ";
+  fi
+}
+
+function __restart() {
+  __stop;
+  __start;
+}
+
+function __stop() {
+  echo -n "var-dump stopping...         ";
+  if start-stop-daemon --pidfile /run/php/var-dump.pid --remove-pidfile --stop; then
+    echo -e "\rvar-dump stopped.            ";
+  else
+    echo -e "\rvar-dump failed to stop.     ";
+  fi
+}
+
+#
+# Service options
+#
+case "$1" in
+  status)
+    __status;
+    ;;
+  start)
+    __start;
+    ;;
+  restart)
+    __restart;
+    ;;
+  stop)
+    __stop;
+    ;;
+  *)
+    echo "Usage: /etc/init.d/var-dump {status|start|restart|stop}"
+    exit 1
+    ;;
+esac
+
+
+exit 0

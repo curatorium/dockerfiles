@@ -1,1 +1,4 @@
+.build-cache/
+.env
 .idea/
+build.log

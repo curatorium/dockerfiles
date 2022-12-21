@@ -1,0 +1,92 @@
+#!/bin/bash
+
+### BEGIN INIT PHP-HTTP
+# Provides:          php-http
+# Short-Description: PHP HTTP server
+# Description:       The built-in HTTP server of the PHP runtime.
+### END INIT PHP-HTTP
+
+function __status() {
+  if start-stop-daemon --pidfile /run/php/php-http.pid --status; then
+    echo "PHP-HTTP running.            ";
+  else
+    echo "PHP-HTTP stopped.            ";
+  fi
+}
+
+function __start() {
+  echo -n "PHP-HTTP starting...         ";
+
+  cd /app;
+
+  #
+  # Identify which type of front end controller is available.
+  #
+
+  # current directory (fallback)
+  CMD="/usr/bin/php";
+  ARGS="-S 0.0.0.0:80";
+
+  # public/ directory with index.php
+  if [[ -d "public/" ]]; then
+    CMD="/usr/bin/php";
+    ARGS="-S 0.0.0.0:80 -t public/";
+  fi
+
+  # Laravel Artisan
+  if [[ -f "artisan" ]]; then
+    CMD="/usr/bin/php";
+    ARGS="artisan serve";
+  fi
+
+  # Symfony global command
+  if [[ -f "symfony.lock" ]]; then
+    CMD="/usr/bin/symfony"
+    ARGS="server:start --port=80";
+  fi
+
+  if start-stop-daemon --user www-data --chdir /app --pidfile /run/php/php-http.pid --make-pidfile --start --background --exec $CMD -- $ARGS; then
+    echo -e "\rPHP-HTTP started.            ";
+  else
+    echo -e "\rPHP-HTTP failed to start.    ";
+  fi
+}
+
+function __restart() {
+  __stop;
+  __start;
+}
+
+function __stop() {
+  echo -n "PHP-HTTP stopping...         ";
+  if start-stop-daemon --pidfile /run/php/php-http.pid --remove-pidfile --stop; then
+    echo -e "\rPHP-HTTP stopped.            ";
+  else
+    echo -e "\rPHP-HTTP failed to stop.     ";
+  fi
+}
+
+#
+# Service options
+#
+case "$1" in
+  status)
+    __status;
+    ;;
+  start)
+    __start;
+    ;;
+  restart)
+    __restart;
+    ;;
+  stop)
+    __stop;
+    ;;
+  *)
+    echo "Usage: /etc/init.d/php-http {status|start|restart|stop}"
+    exit 1
+    ;;
+esac
+
+
+exit 0

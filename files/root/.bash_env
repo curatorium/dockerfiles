@@ -1,0 +1,7 @@
+export HISTIGNORE="&:bg:fg:ll:h"
+export HISTTIMEFORMAT="$(echo -e ${BCyan})[%d/%m %H:%M:%S]$(echo -e ${NC}) "
+export HISTCONTROL=ignoreboth
+export HISTSIZE=100000
+export HISTFILESIZE=100000
+export TIMEFORMAT=$'\nreal %3R\tuser %3U\tsys %3S\tpcpu %P\n'
+export EDITOR=nano

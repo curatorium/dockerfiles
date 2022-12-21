@@ -1,6 +1,9 @@
+.env
+.env.example
 .gitignore
+build
+CHANGELOG.md
+Dockerfile
 docker-compose.yml
 LICENSE
-Makefile
-*.Dockerfile
 README.md

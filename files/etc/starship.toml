@@ -1,0 +1,71 @@
+scan_timeout = 10
+add_newline = false
+format = """
+$username$hostname$directory\
+$git_branch$git_commit$git_state$git_status\
+$time$cmd_duration$jobs$character\
+"""
+
+[username]
+format = "[$user]($style)"
+show_always = true
+ssh_only = false
+style_user = "bold green"
+
+[hostname]
+format = "@[$hostname]($style)"
+ssh_only = false
+style = "bold red"
+
+[directory]
+format = ":[$path]($style)[$read_only]($read_only_style)"
+truncation_length = 3
+truncate_to_repo = true
+truncation_symbol = "…/"
+style = "bold blue"
+
+[git_branch]
+format = "(#[$branch]($style))"
+style = "bold cyan"
+
+[git_commit]
+format = "(~[$hash]($style))(~[$tag]($style))"
+tag_disabled = false
+style = "bold cyan"
+tag_symbol = ""
+
+[git_state]
+format = "(~[$state:$progress_current/$progress_total]($style))"
+rebase = "r"
+merge = "m"
+revert = "u"
+cherry_pick = "p"
+bisect = "b"
+am = "a"
+am_or_rebase = "?"
+style = "bold cyan"
+
+[git_status]
+format = "(~[$all_status$ahead_behind]($style))"
+style = "bold cyan"
+
+[time]
+format = "|[$time]($style)"
+disabled = false
+style = "bold yellow"
+
+[cmd_duration]
+format = "|[$duration]($style)"
+min_time = 0
+show_milliseconds = true
+style = "bold yellow"
+
+[jobs]
+format = "|[$symbol$number]($style)"
+symbol = "⟳ "
+style = "bold yellow"
+
+[character]
+format = "$symbol "
+success_symbol = "[\\$](bold white)"
+error_symbol = "[✖](bold red)"

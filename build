@@ -1,0 +1,36 @@
+#!/bin/bash -e
+
+set -o allexport;
+source .env;
+
+IMAGES=(`yq e '.services[].build.target' docker-compose.yml`);
+TS=${4:-`date +%y.%m`};
+
+PUSH=${1:-push};
+PHPVERSIONS=(${2:-7.0 7.1 7.2 7.3 7.4 8.0 8.1 8.2});
+X_ARCHES=(${3:-amd64 arm64});
+
+
+echo "(${IMAGES[*]}) x (${PHPVERSIONS[*]}) x (${X_ARCHES[*]}) @ $TS" > build.log;
+for PHPVS in "${PHPVERSIONS[@]}"
+do
+  # Build each combination of PHPVS + X_ARCH
+  for X_ARCH in "${X_ARCHES[@]}"
+  do
+    echo "Start $ORG/php-$PHPVS:*-$TS-$X_ARCH" >> build.log;
+    docker compose build;
+    echo "Built $ORG/php-$PHPVS:*-$TS-$X_ARCH" >> build.log;
+  done
+
+  # Re-tag the amd64 images with the short name for quick access.
+  for IMAGE in "${IMAGES[@]}"
+  do
+    docker tag $ORG/php-$PHPVS:$IMAGE-$TS-amd64 $ORG/php-$PHPVS:$IMAGE;
+  done
+  echo "Tagged $ORG/php-$PHPVS:*" >> build.log;
+
+  if [[ "push" == "$PUSH" ]]; then
+    docker push $ORG/php-$PHPVS --all-tags;
+    echo "Pushed $ORG/php-$PHPVS:*" >> build.log;
+  fi
+done
