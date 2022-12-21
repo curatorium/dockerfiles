@@ -1,13 +1,12 @@
 ARG VS
 ARG ORG
-FROM $ORG/php-fpm:$VS
+FROM $ORG/php-base:$VS
 ARG VS
 
-ENV COMPOSER_ALLOW_SUPERUSER=1
-
 COPY *.sh ./
-RUN bash -ex php-qa.sh $VS
+RUN bash -ex php-cli.sh $VS
 
-EXPOSE  9000
+WORKDIR	/app
+CMD		php -a
 
 LABEL maintainer="Mihai Stancu <mihai.stancu@neurony.ro>"

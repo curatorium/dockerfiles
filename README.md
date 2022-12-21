@@ -12,7 +12,7 @@ They aim to:
 
 They are based on [phpdockerio](https://hub.docker.com/u/phpdockerio) images which in turn use [ondrej/php](https://launchpad.net/~ondrej/+archive/ubuntu/php) PPA.
 
-PHP versions available are: `7.2`, `7.3`, `7.4` & `8.0`.
+PHP versions available are: `7.4`, `8.0` & `8.1`.
 
 
 ## Usage
@@ -29,7 +29,7 @@ docker run -it -v /var/run/docker.sock:/var/run/docker.sock -v "$(PWD):/app" -p 
 
 Or using `docker-compose` and referencing the `docker-compose.yml`
 ```bash
-export VS=7.2; # specify PHP version for server
+export VS=7.4; # specify PHP version for server
 docker-compose -f /path/to/neurony-php-dockerfiles/docker-compose.yml run app;
 ```
 
@@ -114,17 +114,22 @@ docker-compose -f /path/to/neurony-php-dockerfiles/docker-compose.yml run app pi
 
 Build a specific image:
 ```bash
-make neurony/php-cli:8.0
+make php-cli:8.1
 ```
 
 Build all images for a specific version:
 ```bash
-make neurony/php:8.0
+make php:8.1
 ```
 
-Build all images `(7.2 .. 8.0)` &times; `(cli | fpm | qa | dev)`:
+Build all images `(7.4 .. 8.1)` &times; `(cli | fpm | qa | dev)`:
 ```bash
-make neurony/php
+make all
+```
+
+Push all images
+```bash
+make push
 ```
 
 ### Contributing

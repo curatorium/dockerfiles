@@ -4,6 +4,7 @@ services:
   app:
     image: "neurony/php-dev:${VS:-8.0}"
     ports:
+      - 9000:9000
       - 80:80
     volumes:
       - $PWD:/app
