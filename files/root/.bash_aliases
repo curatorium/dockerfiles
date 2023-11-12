@@ -1,6 +1,13 @@
 #
-# Laravel shortcuts
+# Symfony shortcuts
+alias cache:clear="/app/bin/console cache:clear";
+alias migrate="/app/bin/console doctrine:migrations:migrate";
+alias schema:create="/app/bin/console doctrine:schema:create --dump-sql";
+alias schema:update="/app/bin/console doctrine:schema:update --dump-sql";
+alias psysh="psysh --cwd /app --config /etc/psysh.php";
+
 #
+# Laravel shortcuts
 alias artisan="php artisan";
 alias db:seed="artisan db:seed";
 alias migrate="artisan migrate";
@@ -12,7 +19,6 @@ alias tinker="artisan tinker";
 
 #
 # Behavior overrides
-#
 alias rm='rm -i'
 alias cp='cp -i'
 alias mv='mv -i'

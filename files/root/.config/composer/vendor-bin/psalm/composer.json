@@ -1,0 +1,11 @@
+{
+    "config": {
+        "bin-dir": "/usr/local/bin"
+    },
+    "require": {
+        "vimeo/psalm": "*",
+        "psalm/plugin-laravel": "*",
+        "psalm/plugin-symfony": "*",
+        "weirdan/doctrine-psalm-plugin": "*"
+    }
+}

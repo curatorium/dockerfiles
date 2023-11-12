@@ -1,36 +1,62 @@
-#!/bin/bash -e
+#!/bin/bash
 
 set -o allexport;
 source .env;
 
-IMAGES=(`yq e '.services[].build.target' docker-compose.yml`);
+ROLES=(`yq e '.services[].build.target' docker-compose.yml`);
 TS=${4:-`date +%y.%m`};
 
-PUSH=${1:-push};
-PHPVERSIONS=(${2:-7.0 7.1 7.2 7.3 7.4 8.0 8.1 8.2});
+PUSH=${1:-nopush};
+PHPVERSIONS=(${2:-8.2 8.1 8.0});
 X_ARCHES=(${3:-amd64 arm64});
 
+([[ "$PUSH" == "help" ]] || [[ "$PUSH" == "--help" ]] || [[ "$PUSH" == "-h" ]]) && cat <<TXT && exit;
 
-echo "(${IMAGES[*]}) x (${PHPVERSIONS[*]}) x (${X_ARCHES[*]}) @ $TS" > build.log;
+NAME
+        build          Build multiple images: ((${ROLES[*]}) x (${PHPVERSIONS[*]}) x (${X_ARCHES[*]}) @ $TS)
+
+SYNOPSIS
+        build <should-push> <phpversions> <arches> <semver>
+
+ARGUMENTS
+        should-push    Optional. Default "nopush". If after building each image, it should be pushed to its remote.
+        phpversions    Optional. Default "$PHPVERSIONS". Specifies a list of PHP versions to be built.
+        arches         Optional. Default "$X_ARCHES". Specifies the list of platform architectures to build for.
+        semver         Optional. Default "$TS" (current YY-mm). Specifies the semantic version tag of the images.
+
+TXT
+
+function __build() {
+  echo -n "$ORG/php-$PHPVS:*-$TS-$X_ARCH" >> build.log;
+  docker compose build;
+  echo -e " \xE2\x9C\x94" >> build.log;
+}
+
+function __alias() {
+  echo -n "$ALIAS" >> build.log;
+  docker manifest create --amend "$ALIAS" "$ORG/php-$PHPVS:$ROLE-$TS-$X_ARCH";
+  docker manifest annotate "$ALIAS" "$ORG/php-$PHPVS:$ROLE-$TS-$X_ARCH" --os linux --arch amd64;
+  docker manifest push "$ALIAS";
+  echo -e " \xE2\x9C\x94" >> build.log;
+}
+
+
+echo "(${ROLES[*]}) x (${PHPVERSIONS[*]}) x (${X_ARCHES[*]}) @ $TS" > build.log;
 for PHPVS in "${PHPVERSIONS[@]}"
 do
-  # Build each combination of PHPVS + X_ARCH
   for X_ARCH in "${X_ARCHES[@]}"
   do
-    echo "Start $ORG/php-$PHPVS:*-$TS-$X_ARCH" >> build.log;
-    docker compose build;
-    echo "Built $ORG/php-$PHPVS:*-$TS-$X_ARCH" >> build.log;
-  done
+    __build
 
-  # Re-tag the amd64 images with the short name for quick access.
-  for IMAGE in "${IMAGES[@]}"
-  do
-    docker tag $ORG/php-$PHPVS:$IMAGE-$TS-amd64 $ORG/php-$PHPVS:$IMAGE;
-  done
-  echo "Tagged $ORG/php-$PHPVS:*" >> build.log;
+      for ROLE in "${ROLES[@]}"
+      do
+        [[ "push" == "$PUSH" ]] && docker push $ORG/php-$PHPVS:$ROLE-$TS-$X_ARCH;
 
-  if [[ "push" == "$PUSH" ]]; then
-    docker push $ORG/php-$PHPVS --all-tags;
-    echo "Pushed $ORG/php-$PHPVS:*" >> build.log;
-  fi
+        ALIASES=$(envsubst < aliases.yml);
+        for ALIAS in $(yq e '(.["'$ORG/php-$PHPVS:$ROLE-$TS-$X_ARCH'"])' -o tsv <<<$ALIASES)
+        do
+          [[ "push" == "$PUSH" ]] && __alias
+        done
+      done
+  done
 done

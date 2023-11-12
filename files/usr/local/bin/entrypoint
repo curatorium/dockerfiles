@@ -1,0 +1,31 @@
+#!/bin/bash
+
+#
+# Run scripts:
+# - If a custom script is provided in /entrypoint.d/ then it will be executed.
+# - If a custom script exits then execution stops immediately.
+# - If an argument is provided then 50-run-command.sh will run it and exit.
+# - Otherwise the scripts 90-start-servers.sh will start nginx, php-fpm, crond etc..
+# - Will sleep until an INT, QUIT, or STOP signal is given.
+# - Will shutdown all running services before exiting.
+for script in /entrypoint.d/*.sh;
+do
+  # scripts are sourced
+  source "$script" "$@";
+done
+
+#
+# Stop all services
+function __stop() {
+  find /etc/init.d/ -type f -exec {} stop \;
+  exit;
+}
+
+#
+# Stop all services when we receive a signal
+trap __stop INT QUIT TERM;
+
+#
+# Keep process running
+sleep infinity &
+wait;

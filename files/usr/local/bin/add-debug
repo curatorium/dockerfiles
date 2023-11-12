@@ -1,0 +1,29 @@
+#!/bin/bash -ex
+
+add-config;
+
+[[ -z "$(ls /var/lib/apt/lists)" ]] && apt update;
+
+PACKAGES=$(cat <<LIST
+  bash-completion
+  dnsutils
+  inetutils-ping
+  less
+  libmemcached-tools
+  mariadb-client
+  nano
+  net-tools
+  netcat-traditional
+  readline-common
+  redis-tools
+  telnet
+  vim
+LIST
+);
+
+apt install -y --no-install-recommends $PACKAGES;
+
+# Ensure files are reread.
+cd /etc/php/$PHPVS/mods-available;
+[[ -f opcache.ini ]] && sed -i 's/opcache.validate_timestamps=0/opcache.validate_timestamps=1/' opcache.ini;
+/etc/init.d/php-fpm reload;

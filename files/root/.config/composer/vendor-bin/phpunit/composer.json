@@ -1,0 +1,9 @@
+{
+    "config": {
+        "bin-dir": "/usr/local/bin"
+    },
+    "require": {
+        "phpunit/phpunit": "*",
+        "brianium/paratest": "*"
+    }
+}

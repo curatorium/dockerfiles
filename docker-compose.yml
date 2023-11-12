@@ -1,53 +1,37 @@
 version: "3.9"
 
 services:
-  cli:
+  base:
     build:
-      target: cli
       args: &build-args
-        BASE: ${BASE:-ubuntu:20.04}
-        NODEVS: ${NODEVS:-16}
-        PHPVS: ${PHPVS:-8.1}
-        X_ARCH: ${X_ARCH:-amd64}
-        X_UID: ${XID:-1000:1000}
-    image: $ORG/php-${PHPVS}:cli-${TS:-latest}-${X_ARCH:-amd64}
+        NODEVS: ${NODEVS:-18}
+        PHPVS: ${PHPVS:-8.2}
+        X_ARCH: $X_ARCH
+      target: base
+    env_file: .env
+    image: $ORG/php-$PHPVS:base-$TS-$X_ARCH
     labels: &labels
       maintainer: Mihai Stancu <mihai.stancu@neurony.ro>
-    platform: linux/${X_ARCH:-amd64}
-
-  fpm:
-    build:
-      target: fpm
-      args: *build-args
-    depends_on: [cli]
-    image: $ORG/php-${PHPVS}:fpm-${TS:-latest}-${X_ARCH:-amd64}
-    labels: *labels
-    platform: linux/${X_ARCH:-amd64}
+    platform: linux/$X_ARCH
 
   qa:
     build:
-      target: qa
       args: *build-args
-    depends_on: [fpm]
-    image: $ORG/php-${PHPVS}:qa-${TS:-latest}-${X_ARCH:-amd64}
+      target: qa
+    command: [bash]
+    depends_on: [base]
+    env_file: .env
+    image: $ORG/php-$PHPVS:qa-$TS-$X_ARCH
     labels: *labels
-    platform: linux/${X_ARCH:-amd64}
+    platform: linux/$X_ARCH
 
   fs:
     build:
+      args: *build-args
       target: fs
-      args: *build-args
+    command: [bash]
     depends_on: [qa]
-    image: $ORG/php-${PHPVS}:fs-${TS:-latest}-${X_ARCH:-amd64}
+    env_file: .env
+    image: $ORG/php-$PHPVS:fs-$TS-$X_ARCH
     labels: *labels
-    platform: linux/${X_ARCH:-amd64}
-
-  dev:
-    build:
-      target: dev
-      args: *build-args
-    depends_on: [fs]
-    image: $ORG/php-${PHPVS}:dev-${TS:-latest}-${X_ARCH:-amd64}
-    labels: *labels
-    platform: linux/${X_ARCH:-amd64}
-    ports: [ 80:80, 443:443, 9000:9000, 9912:9912 ]
+    platform: linux/$X_ARCH

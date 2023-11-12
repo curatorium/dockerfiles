@@ -1,0 +1,26 @@
+version: "3.9"
+
+services:
+  base:
+    ports:
+      - 80:80
+      - 443:443
+    volumes: &volumes
+      - ./files/entrypoint.d/:/entrypoint.d/
+      - ./files/etc/init.d/var-dump:/etc/init.d/var-dump
+      - ./files/etc/nginx/templates:/etc/nginx/templates
+      - ./files/usr/local/bin/add-config:/usr/local/bin/add-config
+      - ./files/usr/local/bin/add-debug:/usr/local/bin/add-debug
+      - ./files/usr/local/bin/add-docker:/usr/local/bin/add-docker
+      - ./files/usr/local/bin/add-node:/usr/local/bin/add-node
+      - ./files/usr/local/bin/add-php:/usr/local/bin/add-php
+      - ./files/usr/local/bin/add-qa:/usr/local/bin/add-qa
+      - ./files/usr/local/bin/docker-clean:/usr/local/bin/docker-clean
+      - ./files/usr/local/bin/entrypoint:/usr/local/bin/entrypoint
+      - ./files/app:/app
+
+  qa:
+    volumes: *volumes
+
+  fs:
+    volumes: *volumes

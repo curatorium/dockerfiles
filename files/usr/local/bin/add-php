@@ -1,0 +1,115 @@
+#!/bin/bash -ex
+
+apt update;
+
+#
+# Install prerequisites
+PREREQUISITES=$(cat <<LIST
+  cron
+  gnupg
+  tini
+LIST
+);
+apt install -y --no-install-recommends $PREREQUISITES;
+
+#
+# Add Ondrej Sury's PHP repository @see https://deb.sury.org/
+curl -1fsSL -o /etc/apt/trusted.gpg.d/php.gpg https://packages.sury.org/php/apt.gpg;
+echo "deb https://packages.sury.org/php/ bookworm main" > /etc/apt/sources.list.d/ondrej-sury.list;
+
+#
+# Add NewRelic's repository @see https://docs.newrelic.com/docs/apm/agents/php-agent/installation/php-agent-installation-ubuntu-debian/
+curl -1fsSL https://download.newrelic.com/548C16BF.gpg | gpg --dearmor -o /etc/apt/trusted.gpg.d/newrelic.gpg;
+echo 'deb http://apt.newrelic.com/debian/ newrelic non-free' > /etc/apt/sources.list.d/newrelic.list;
+
+apt update;
+
+#
+# Install PHP & PHP Modules (& their dependencies)
+PACKAGES=$(cat <<LIST
+  locales
+  tzdata
+
+  gifsicle
+  imagemagick
+  jpegoptim
+  optipng
+  pngquant
+
+  php$PHPVS-amqp
+  php$PHPVS-bcmath
+  php$PHPVS-cli
+  php$PHPVS-common
+  php$PHPVS-curl
+  php$PHPVS-fpm
+  php$PHPVS-gd
+  php$PHPVS-grpc
+  php$PHPVS-igbinary
+  php$PHPVS-imagick
+  php$PHPVS-intl
+  php$PHPVS-mbstring
+  php$PHPVS-mcrypt
+  php$PHPVS-memcached
+  php$PHPVS-mongodb
+  php$PHPVS-msgpack
+  php$PHPVS-mysql
+  php$PHPVS-odbc
+  php$PHPVS-opcache
+  php$PHPVS-pgsql
+  php$PHPVS-protobuf
+  php$PHPVS-readline
+  php$PHPVS-redis
+  php$PHPVS-soap
+  php$PHPVS-sqlite3
+  php$PHPVS-ssh2
+  php$PHPVS-stomp
+  php$PHPVS-xml
+  php$PHPVS-xsl
+  php$PHPVS-yaml
+  php$PHPVS-zip
+  php$PHPVS-zmq
+LIST
+);
+apt install -y --no-install-recommends $PACKAGES;
+
+#
+# Install NewRelic PHP agent (only for AMD64)
+[[ "$X_ARCH" == "amd64" ]] && apt-get -y install newrelic-php5 && phpdismod newrelic;
+
+#
+# Install Composer
+curl -1fsSL https://getcomposer.org/installer | php -- --2   --install-dir=/usr/local/bin --filename=composer
+chmod +x /usr/local/bin/*
+
+#
+# Install TimezoneDB via PECL
+PECL_PREREQ="make php$PHPVS-dev php-pear";
+apt install -y --no-install-recommends $PECL_PREREQ;
+pecl channel-update pecl.php.net;
+pecl install timezonedb;
+apt remove -y $PECL_PREREQ;
+echo "extension=timezonedb.so" > "/etc/php/$PHPVS/mods-available/timezonedb.ini";
+phpenmod "timezonedb";
+
+#
+# Setup NGINX
+# Work as www-data
+sed -i 's/user  nginx;/user www-data;/' /etc/nginx/nginx.conf;
+# Redirect output to stdout & stderr
+ln -sfn /proc/1/fd/1 /var/log/nginx/access.log;
+ln -sfn /proc/1/fd/2 /var/log/nginx/error.log;
+# Move original docker-entrypoint.sh to /usr/local/bin/ and rename it to reflect that it only handles nginx
+sed -i 's/\/docker-entrypoint.d/\/entrypoint-nginx.d/' /docker-entrypoint.sh
+mv /docker-entrypoint.sh /usr/local/bin/nginx-entrypoint;
+mv /docker-entrypoint.d /entrypoint-nginx.d;
+
+#
+# Setup PHP-FPM
+# Use a version neutral service name
+ln -sfn /etc/init.d/php?.?-fpm /etc/init.d/php-fpm;
+# Redirect output to stdout & stderr
+ln -sfn /proc/1/fd/2 /var/log/php$PHPVS-fpm.log;
+
+#
+# Enable case insensitive tab-completion
+echo 'set completion-ignore-case On;' >> /etc/inputrc;

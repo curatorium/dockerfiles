@@ -1,130 +1,67 @@
 #
-# PHP-CLI
-#
-ARG			BASE
-FROM		$BASE AS cli
-ARG			NODEVS
-ARG			PHPVS
-ARG			X_ARCH
-ARG			X_UID
+# PHP
+FROM nginx:bookworm AS base
+ARG  PHPVS
+ENV  PHPVS  $PHPVS
+ARG  X_ARCH
+ENV  X_ARCH $X_ARCH
 
-ENV			TERM=linux
-ENV			DEBIAN_FRONTEND=noninteractive
-ENV			COMPOSER_ALLOW_SUPERUSER=1
-
-COPY		build-scripts /opt/build-scripts
-COPY        docker-entrypoint.sh /usr/local/bin/docker-entrypoint
-
-RUN			--mount=type=cache,target=/root/.composer/cache																\
-			--mount=type=cache,target=/root/.config/composer/cache														\
-			--mount=type=cache,target=/var/cache																		\
-			--mount=type=tmpfs,destination=/var/lib/apt/lists															\
-			--mount=type=tmpfs,destination=/var/tmp																		\
-			--mount=type=tmpfs,destination=/usr/share/doc																\
-			--mount=type=tmpfs,destination=/tmp																			\
-			/opt/build-scripts/php-cli.sh $PHPVS $NODEVS $X_ARCH $X_UID
-
-# tini handles PID=1 and reaps zombie processes
-# @see https://github.com/krallin/tini
-# @see https://github.com/krallin/tini/issues/8
-ENTRYPOINT	["tini", "--"]
-CMD			["docker-entrypoint"]
-
-STOPSIGNAL	SIGTERM
-WORKDIR		/app
+ENV  COMPOSER_ALLOW_SUPERUSER       1
+ENV  DEBIAN_FRONTEND                noninteractive
+ENV  LANG                           en_US.UTF-8
+ENV  LC_ALL                         C.UTF-8
+ENV  NGINX_ENVSUBST_TEMPLATE_SUFFIX .tpl
+ENV  TERM                           linux
+ENV  TZ                             UTC
+ENV  VAR_DUMPER_FORMAT              server
 
 
-#
-# PHP-FPM
-#
-FROM		cli AS fpm
-ARG			NODEVS
-ARG			PHPVS
-ARG			X_ARCH
-ARG			X_UID
+COPY files/entrypoint.d           /entrypoint.d
+COPY files/etc/init.d/*           /etc/init.d/
+COPY files/etc/newrelic/          /etc/newrelic/
+COPY files/etc/nginx/templates/*  /etc/nginx/templates/
+COPY files/etc/psysh.php          /etc/psysh.php
+COPY files/root/.bash*            /root/
+COPY files/root/.config/composer  /root/.config/composer
+COPY files/usr/local/bin          /usr/local/bin
 
-COPY        files/etc/init.d/php-fpm /etc/init.d/
-RUN			--mount=type=cache,target=/root/.composer/cache																\
-			--mount=type=cache,target=/root/.config/composer/cache														\
-			--mount=type=cache,target=/var/cache																		\
-			--mount=type=tmpfs,destination=/var/lib/apt/lists															\
-			--mount=type=tmpfs,destination=/var/tmp																		\
-			--mount=type=tmpfs,destination=/usr/share/doc																\
-			--mount=type=tmpfs,destination=/tmp																			\
-			/opt/build-scripts/php-fpm.sh $PHPVS $NODEVS $X_ARCH $X_UID
+RUN  add-php && docker-clean;
 
+# tini handles PID=1 @see https://github.com/krallin/tini
+ENTRYPOINT  ["tini", "--", "entrypoint"]
+
+STOPSIGNAL SIGTERM
+WORKDIR    /app
+
+# NGINX HTTP server
+EXPOSE     80
+# NGINX HTTPs server
+EXPOSE     443
 # PHP-FPM server
-EXPOSE		9000
+EXPOSE     9000
+# Symfony Dump Server @see https://symfony.com/doc/current/components/var_dumper.html#the-dump-server
+EXPOSE     9912
 
 
 #
 # PHP-QA
-#
-FROM		fpm AS qa
-ARG			NODEVS
-ARG			PHPVS
-ARG			X_ARCH
-ARG			X_UID
+FROM base AS qa
+ARG  PHPVS
+ENV  PHPVS  $PHPVS
+ARG  X_ARCH
+ENV  X_ARCH $X_ARCH
 
-RUN			--mount=type=cache,target=/root/.composer/cache																\
-			--mount=type=cache,target=/root/.config/composer/cache														\
-			--mount=type=cache,target=/var/cache																		\
-			--mount=type=tmpfs,destination=/var/lib/apt/lists															\
-			--mount=type=tmpfs,destination=/var/tmp																		\
-			--mount=type=tmpfs,destination=/usr/share/doc																\
-			--mount=type=tmpfs,destination=/tmp																			\
-			/opt/build-scripts/php-qa.sh $PHPVS $NODEVS $X_ARCH $X_UID
+RUN  add-qa && docker-clean;
 
 
 #
-# Fullstack PHP + NodeJS
-#
-FROM		qa AS fs
-ARG			NODEVS
-ARG			PHPVS
-ARG			X_ARCH
-ARG			X_UID
+# PHP-FS
+FROM qa AS fs
+ARG  NODEVS
+ENV  NODEVS  $NODEVS
+ARG  PHPVS
+ENV  PHPVS  $PHPVS
+ARG  X_ARCH
+ENV  X_ARCH $X_ARCH
 
-ENV			PATH "$PATH:/opt/npm/bin"
-RUN			--mount=type=cache,target=/root/.composer/cache																\
-			--mount=type=cache,target=/root/.config/composer/cache														\
-			--mount=type=cache,target=/var/cache																		\
-			--mount=type=tmpfs,destination=/var/lib/apt/lists															\
-			--mount=type=tmpfs,destination=/var/tmp																		\
-			--mount=type=tmpfs,destination=/usr/share/doc																\
-			--mount=type=tmpfs,destination=/tmp																			\
-			/opt/build-scripts/php-fs.sh $PHPVS $NODEVS $X_ARCH $X_UID
-
-
-#
-# PHP-DEV
-#
-FROM		fs AS dev
-ARG			NODEVS
-ARG			PHPVS
-ARG			X_ARCH
-ARG			X_UID
-
-COPY        files/etc/init.d/php-http /etc/init.d/
-COPY        files/etc/init.d/var-dump /etc/init.d/
-COPY        files/etc/psysh.php /etc/psysh.php
-COPY        files/etc/starship.toml /etc/starship.toml
-COPY		files/root/.bash* /root/
-RUN			--mount=type=cache,target=/root/.composer/cache																\
-			--mount=type=cache,target=/root/.config/composer/cache														\
-			--mount=type=cache,target=/var/cache																		\
-			--mount=type=tmpfs,destination=/var/lib/apt/lists															\
-			--mount=type=tmpfs,destination=/var/tmp																		\
-			--mount=type=tmpfs,destination=/usr/share/doc																\
-			--mount=type=tmpfs,destination=/tmp																			\
-			/opt/build-scripts/php-dev.sh $PHPVS $NODEVS $X_ARCH $X_UID
-
-ENV			VAR_DUMPER_FORMAT server
-ENV			STARSHIP_CONFIG /etc/starship.toml
-
-# PHP-HTTP server
-EXPOSE		80
-# PHP-HTTP server (if HTTPs is available)
-EXPOSE		443
-# Symfony Dump Server @see https://symfony.com/doc/current/components/var_dumper.html#the-dump-server
-EXPOSE		9912
+RUN  add-node && docker-clean;

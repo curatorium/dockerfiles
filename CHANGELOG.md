@@ -20,3 +20,17 @@ CHANGELOG
 
 ### 2022-09
 1. ARM64 support via buildx
+
+### 2023-09
+1. Dropped support for PHP versions <8.x
+1. Complete ARM64 support with multi-arch images (docker manifests)
+
+### 2023-11
+1. Upgraded underlying OS version
+1. Migrated to a Debian based image
+1. Migrated to nginx:bookworm as base image (official nginx image)
+1. Merged PHP-CLI & PHP-FPM into a single image
+1. Dropped support for the php-http service -- replaced by nginx
+1. Dropped the PHP-DEV image; replaced by a command (`add-debug`) to installs tools 
+1. `www-data` assumes the ID of the owner of the /app dir (at boot) 
+1. Add `php-newrelic5` with environment based configuration

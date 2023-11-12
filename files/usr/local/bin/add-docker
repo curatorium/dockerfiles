@@ -1,0 +1,16 @@
+#!/bin/bash -ex
+
+#
+# Install Docker + docker-compose
+curl -1fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/trusted.gpg.d/docker.gpg
+echo "deb https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" > /etc/apt/sources.list.d/docker.list
+apt update;
+apt install -y --no-install-recommends docker-ce-cli docker-compose-plugin;
+
+#
+# Install Kubectl
+curl -1fsSL -o /usr/local/bin/kubectl https://dl.k8s.io/release/v1.24.13/bin/linux/${X_ARCH}/kubectl;
+
+#
+# Mark all new binaries as executable
+chmod +x /usr/local/bin/*;
