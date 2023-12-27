@@ -26,7 +26,7 @@ extension = "newrelic.so"
 ;          disable the agent on a per-directory basis.
 ;
 ;newrelic.enabled = true
-newrelic.enabled = $NEWRELIC_ENABLED
+newrelic.enabled = $NEWRELIC_ENABLED ; override
 
 ; Setting: newrelic.license
 ; Type   : string

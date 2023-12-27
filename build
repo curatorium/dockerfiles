@@ -34,29 +34,31 @@ function __build() {
 
 function __alias() {
   echo -n "$ALIAS" >> build.log;
-  docker manifest create --amend "$ALIAS" "$ORG/php-$PHPVS:$ROLE-$TS-$X_ARCH";
-  docker manifest annotate "$ALIAS" "$ORG/php-$PHPVS:$ROLE-$TS-$X_ARCH" --os linux --arch amd64;
+  docker manifest rm "$ALIAS" || true; # remove if previously exists, ignore if it didn't
+  docker manifest create "$ALIAS" "$ORG/php-$PHPVS:$ROLE-$TS-amd64" "$ORG/php-$PHPVS:$ROLE-$TS-arm64";
+  docker manifest annotate "$ALIAS" "$ORG/php-$PHPVS:$ROLE-$TS-amd64" --os linux --arch amd64;
+  docker manifest annotate "$ALIAS" "$ORG/php-$PHPVS:$ROLE-$TS-arm64" --os linux --arch arm64;
   docker manifest push "$ALIAS";
   echo -e " \xE2\x9C\x94" >> build.log;
 }
 
 
 echo "(${ROLES[*]}) x (${PHPVERSIONS[*]}) x (${X_ARCHES[*]}) @ $TS" > build.log;
-for PHPVS in "${PHPVERSIONS[@]}"
-do
-  for X_ARCH in "${X_ARCHES[@]}"
-  do
+
+for PHPVS in "${PHPVERSIONS[@]}"; do for X_ARCH in "${X_ARCHES[@]}"; do
     __build
+done done
 
-      for ROLE in "${ROLES[@]}"
-      do
-        [[ "push" == "$PUSH" ]] && docker push $ORG/php-$PHPVS:$ROLE-$TS-$X_ARCH;
+[[ "push" != "$PUSH" ]] && exit 0;
 
-        ALIASES=$(envsubst < aliases.yml);
-        for ALIAS in $(yq e '(.["'$ORG/php-$PHPVS:$ROLE-$TS-$X_ARCH'"])' -o tsv <<<$ALIASES)
-        do
-          [[ "push" == "$PUSH" ]] && __alias
-        done
-      done
-  done
-done
+for PHPVS in "${PHPVERSIONS[@]}"; do for ROLE in "${ROLES[@]}"; do
+    for X_ARCH in "${X_ARCHES[@]}"; do
+      docker push $ORG/php-$PHPVS:$ROLE-$TS-$X_ARCH;
+    done
+
+    ALIASES=$(envsubst < aliases.yml);
+    for ALIAS in $(yq e '(.["'$ORG/php-$PHPVS:$ROLE-$TS'"])' -o tsv <<<$ALIASES); do
+      __alias
+    done
+done done
+

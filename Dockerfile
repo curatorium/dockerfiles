@@ -16,14 +16,15 @@ ENV  TZ                             UTC
 ENV  VAR_DUMPER_FORMAT              server
 
 
-COPY files/entrypoint.d           /entrypoint.d
-COPY files/etc/init.d/*           /etc/init.d/
-COPY files/etc/newrelic/          /etc/newrelic/
-COPY files/etc/nginx/templates/*  /etc/nginx/templates/
-COPY files/etc/psysh.php          /etc/psysh.php
-COPY files/root/.bash*            /root/
-COPY files/root/.config/composer  /root/.config/composer
-COPY files/usr/local/bin          /usr/local/bin
+COPY files/entrypoint.d             /entrypoint.d
+COPY files/etc/init.d/*             /etc/init.d/
+COPY files/etc/newrelic/            /etc/newrelic/
+COPY files/etc/nginx/templates/*    /etc/nginx/templates/
+COPY files/etc/php/mods-available/* /etc/php/$PHPVS/mods-available
+COPY files/etc/psysh.php            /etc/psysh.php
+COPY files/root/.bash*              /root/
+COPY files/root/.config/composer    /root/.config/composer
+COPY files/usr/local/bin            /usr/local/bin
 
 RUN  add-php && docker-clean;
 

@@ -77,6 +77,7 @@ ex.: `neurony/php-8.2:base` or `neurony/php-8.2:base-23.11` or `neurony/php-8.2:
   - `php-curl`
   - `php-gd`
   - `php-grpc`
+  - `php-http`
   - `php-igbinary`
   - `php-imagick`
   - `php-intl`
@@ -89,6 +90,7 @@ ex.: `neurony/php-8.2:base` or `neurony/php-8.2:base-23.11` or `neurony/php-8.2:
   - `php-odbc`
   - `php-pgsql`
   - `php-protobuf`
+  - `php-raphf`
   - `php-redis`
   - `php-soap`
   - `php-sqlite3`
