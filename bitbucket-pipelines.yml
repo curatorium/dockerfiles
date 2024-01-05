@@ -1,0 +1,42 @@
+image: neurony/php-8.2:cloud-cli
+
+pipelines:
+  custom:
+    build-8.3-amd64:
+      - step: &build_83_amd64
+          name: Build for 8.3 AMD64
+          script:
+            - cloud-login
+            - sed -i '/mcrypt/d' files/usr/local/bin/add-php
+            - ./build push "8.3" "amd64"
+          services: [ docker ]
+
+    build-8.2-amd64:
+      - step: &build_82_amd64
+          name: Build for 8.2 AMD64
+          script: [ cloud-login, ./build push "8.2" "amd64" ]
+          services: [ docker ]
+
+    build-8.1-amd64:
+      - step: &build_81_amd64
+          name: Build for 8.1 AMD64
+          script: [ cloud-login, ./build push "8.1" "amd64" ]
+          services: [ docker ]
+
+    build-8.0-amd64:
+      - step: &build_80_amd64
+          name: Build for 8.0 AMD64
+          script: [ cloud-login, ./build push "8.0" "amd64" ]
+          services: [ docker ]
+
+    build-all:
+      - parallel:
+        - step: *build_83_amd64
+        - step: *build_82_amd64
+        - step: *build_81_amd64
+        - step: *build_80_amd64
+
+definitions:
+  services:
+    docker:
+      memory: 2048

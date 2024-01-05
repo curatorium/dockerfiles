@@ -53,7 +53,7 @@ newrelic.enabled = $NEWRELIC_ENABLED ; override
 ;          is coming from.
 ;
 ;newrelic.license = ""
-newrelic.license = "$NEWRELIC_LICENSE"
+newrelic.license = "$NEWRELIC_LICENSE" ; override
 
 ; Setting: newrelic.logfile
 ; Type   : string
@@ -62,7 +62,7 @@ newrelic.license = "$NEWRELIC_LICENSE"
 ; Info   : Sets the name of the file to send log messages to.
 ;
 ;newrelic.logfile = "/var/log/newrelic/php_agent.log"
-newrelic.logfile = "$NEWRELIC_LOGFILE"
+newrelic.logfile = "$NEWRELIC_LOGFILE" ; override
 
 ; Setting: newrelic.loglevel
 ; Type   : string
@@ -75,7 +75,7 @@ newrelic.logfile = "$NEWRELIC_LOGFILE"
 ;            always, error, warning, info, verbose, debug, verbosedebug
 ;
 ;newrelic.loglevel = "info"
-newrelic.loglevel = "$NEWRELIC_LOGLEVEL"
+newrelic.loglevel = "$NEWRELIC_LOGLEVEL" ; override
 
 ; Setting: newrelic.high_security
 ; Type   : boolean
@@ -102,7 +102,7 @@ newrelic.loglevel = "$NEWRELIC_LOGLEVEL"
 ;          set an error will be thrown and the agent will not connect.
 ;
 ;newrelic.high_security = false
-newrelic.high_security = $NEWRELIC_HIGH_SECURITY
+newrelic.high_security = $NEWRELIC_HIGH_SECURITY ; override
 
 ; Setting: newrelic.appname
 ; Type   : string
@@ -115,7 +115,7 @@ newrelic.high_security = $NEWRELIC_HIGH_SECURITY
 ;          for each account / license key.
 ;
 ;newrelic.appname = "PHP Application"
-newrelic.appname = "$NEWRELIC_APPNAME"
+newrelic.appname = "$NEWRELIC_APPNAME" ; override
 
 ; Setting: newrelic.process_host.display_name
 ; Type   : string
@@ -126,7 +126,7 @@ newrelic.appname = "$NEWRELIC_APPNAME"
 ;          This setting allows you to give your hosts more recognizable names.
 ;
 ;newrelic.process_host.display_name = ""
-newrelic.process_host.display_name = "$NEWRELIC_PROCESS_HOST_DISPLAY_NAME"
+newrelic.process_host.display_name = "$NEWRELIC_PROCESS_HOST_DISPLAY_NAME" ; override
 
 ;
 ; Beginning with version 3.0 of the agent, the daemon can be automatically
@@ -158,7 +158,7 @@ newrelic.process_host.display_name = "$NEWRELIC_PROCESS_HOST_DISPLAY_NAME"
 ; Info   : Sets the name of the file to send daemon log messages to.
 ;
 ;newrelic.daemon.logfile = "/var/log/newrelic/newrelic-daemon.log"
-newrelic.daemon.logfile = "$NEWRELIC_DAEMON_LOGFILE"
+newrelic.daemon.logfile = "$NEWRELIC_DAEMON_LOGFILE" ; override
 
 ; Setting: newrelic.daemon.loglevel
 ; Type   : string
@@ -173,7 +173,7 @@ newrelic.daemon.logfile = "$NEWRELIC_DAEMON_LOGFILE"
 ;          The values verbose and verbosedebug are deprecated aliases for debug.
 ;
 ;newrelic.daemon.loglevel = "info"
-newrelic.daemon.loglevel = "$NEWRELIC_DAEMON_LOGLEVEL"
+newrelic.daemon.loglevel = "$NEWRELIC_DAEMON_LOGLEVEL" ; override
 
 ; Setting: newrelic.daemon.address (alias: newrelic.daemon.port)
 ; Type   : string or integer
@@ -204,7 +204,7 @@ newrelic.daemon.loglevel = "$NEWRELIC_DAEMON_LOGLEVEL"
 ;          OS limitation and not one imposed by the daemon itself.
 ;
 ;newrelic.daemon.address = "/tmp/.newrelic.sock"
-newrelic.daemon.address = "$NEWRELIC_DAEMON_ADDRESS"
+newrelic.daemon.address = "$NEWRELIC_DAEMON_ADDRESS" ; override
 
 ; Setting: newrelic.daemon.ssl_ca_bundle
 ; Type   : string
@@ -219,7 +219,7 @@ newrelic.daemon.address = "$NEWRELIC_DAEMON_ADDRESS"
 ;          directory.
 ;
 ;newrelic.daemon.ssl_ca_bundle = ""
-newrelic.daemon.ssl_ca_bundle = "$NEWRELIC_DAEMON_SSL_CA_BUNDLE"
+newrelic.daemon.ssl_ca_bundle = "$NEWRELIC_DAEMON_SSL_CA_BUNDLE" ; override
 
 ; Setting: newrelic.daemon.ssl_ca_path
 ; Type   : string
@@ -233,7 +233,7 @@ newrelic.daemon.ssl_ca_bundle = "$NEWRELIC_DAEMON_SSL_CA_BUNDLE"
 ;          newrelic.daemon.ssl_ca_path.
 ;
 ;newrelic.daemon.ssl_ca_path = ""
-newrelic.daemon.ssl_ca_path = "$NEWRELIC_DAEMON_SSL_CA_PATH"
+newrelic.daemon.ssl_ca_path = "$NEWRELIC_DAEMON_SSL_CA_PATH" ; override
 
 ; Setting: newrelic.daemon.proxy
 ; Type   : string
@@ -251,7 +251,7 @@ newrelic.daemon.ssl_ca_path = "$NEWRELIC_DAEMON_SSL_CA_PATH"
 ;             user:password@hostname:port
 ;
 ;newrelic.daemon.proxy = ""
-newrelic.daemon.proxy = "$NEWRELIC_DAEMON_PROXY"
+newrelic.daemon.proxy = "$NEWRELIC_DAEMON_PROXY" ; override
 
 ; Setting: newrelic.daemon.pidfile
 ; Type   : string
@@ -262,7 +262,7 @@ newrelic.daemon.proxy = "$NEWRELIC_DAEMON_PROXY"
 ;          script to determine whether or not the daemon is already running.
 ;
 ;newrelic.daemon.pidfile = ""
-newrelic.daemon.pidfile = "$NEWRELIC_DAEMON_PIDFILE"
+newrelic.daemon.pidfile = "$NEWRELIC_DAEMON_PIDFILE" ; override
 
 ; Setting: newrelic.daemon.location
 ; Type   : string
@@ -274,7 +274,7 @@ newrelic.daemon.pidfile = "$NEWRELIC_DAEMON_PIDFILE"
 ;          /opt/newrelic/bin/newrelic-daemon.
 ;
 ;newrelic.daemon.location = "/usr/bin/newrelic-daemon"
-newrelic.daemon.location = "$NEWRELIC_DAEMON_LOCATION"
+newrelic.daemon.location = "$NEWRELIC_DAEMON_LOCATION" ; override
 
 ; Setting: newrelic.daemon.collector_host
 ; Type   : string
@@ -288,7 +288,7 @@ newrelic.daemon.location = "$NEWRELIC_DAEMON_LOCATION"
 ;          person or support staff member.
 ;
 ;newrelic.daemon.collector_host = ""
-newrelic.daemon.collector_host = "$NEWRELIC_DAEMON_COLLECTOR_HOST"
+newrelic.daemon.collector_host = "$NEWRELIC_DAEMON_COLLECTOR_HOST" ; override
 
 ; Setting: newrelic.daemon.dont_launch
 ; Type   : integer (0, 1, 2 or 3)
@@ -304,7 +304,7 @@ newrelic.daemon.collector_host = "$NEWRELIC_DAEMON_COLLECTOR_HOST"
 ;          3 - the agent will never start the daemon
 ;
 ;newrelic.daemon.dont_launch = 0
-newrelic.daemon.dont_launch = $NEWRELIC_DAEMON_DONT_LAUNCH
+newrelic.daemon.dont_launch = $NEWRELIC_DAEMON_DONT_LAUNCH ; override
 
 ; Setting: newrelic.daemon.utilization.detect_aws
 ; Type   : boolean
@@ -314,7 +314,7 @@ newrelic.daemon.dont_launch = $NEWRELIC_DAEMON_DONT_LAUNCH
 ;          create a small amount of network traffic on daemon startup.
 ;
 ;newrelic.daemon.utilization.detect_aws = true
-newrelic.daemon.utilization.detect_aws = $NEWRELIC_DAEMON_UTILIZATION_DETECT_AWS
+newrelic.daemon.utilization.detect_aws = $NEWRELIC_DAEMON_UTILIZATION_DETECT_AWS ; override
 
 ; Setting: newrelic.daemon.utilization.detect_azure
 ; Type   : boolean
@@ -324,7 +324,7 @@ newrelic.daemon.utilization.detect_aws = $NEWRELIC_DAEMON_UTILIZATION_DETECT_AWS
 ;          create a small amount of network traffic on daemon startup.
 ;
 ;newrelic.daemon.utilization.detect_azure = true
-newrelic.daemon.utilization.detect_azure = $NEWRELIC_DAEMON_UTILIZATION_DETECT_AZURE
+newrelic.daemon.utilization.detect_azure = $NEWRELIC_DAEMON_UTILIZATION_DETECT_AZURE ; override
 
 ; Setting: newrelic.daemon.utilization.detect_gcp
 ; Type   : boolean
@@ -335,7 +335,7 @@ newrelic.daemon.utilization.detect_azure = $NEWRELIC_DAEMON_UTILIZATION_DETECT_A
 ;          daemon startup.
 ;
 ;newrelic.daemon.utilization.detect_gcp = true
-newrelic.daemon.utilization.detect_gcp = $NEWRELIC_DAEMON_UTILIZATION_DETECT_GCP
+newrelic.daemon.utilization.detect_gcp = $NEWRELIC_DAEMON_UTILIZATION_DETECT_GCP ; override
 
 ; Setting: newrelic.daemon.utilization.detect_pcf
 ; Type   : boolean
@@ -345,7 +345,7 @@ newrelic.daemon.utilization.detect_gcp = $NEWRELIC_DAEMON_UTILIZATION_DETECT_GCP
 ;          Foundry.
 ;
 ;newrelic.daemon.utilization.detect_pcf = true
-newrelic.daemon.utilization.detect_pcf = $NEWRELIC_DAEMON_UTILIZATION_DETECT_PCF
+newrelic.daemon.utilization.detect_pcf = $NEWRELIC_DAEMON_UTILIZATION_DETECT_PCF ; override
 
 ; Setting: newrelic.daemon.utilization.detect_docker
 ; Type   : boolean
@@ -355,7 +355,7 @@ newrelic.daemon.utilization.detect_pcf = $NEWRELIC_DAEMON_UTILIZATION_DETECT_PCF
 ;          to support future features.
 ;
 ;newrelic.daemon.utilization.detect_docker = true
-newrelic.daemon.utilization.detect_docker = $NEWRELIC_DAEMON_UTILIZATION_DETECT_DOCKER
+newrelic.daemon.utilization.detect_docker = $NEWRELIC_DAEMON_UTILIZATION_DETECT_DOCKER ; override
 
 ; Setting: newrelic.daemon.utilization.detect_kubernetes
 ; Type   : boolean
@@ -365,7 +365,7 @@ newrelic.daemon.utilization.detect_docker = $NEWRELIC_DAEMON_UTILIZATION_DETECT_
 ;          cluster.
 ;
 ;newrelic.daemon.utilization.detect_kubernetes = true
-newrelic.daemon.utilization.detect_kubernetes = $NEWRELIC_DAEMON_UTILIZATION_DETECT_KUBERNETES
+newrelic.daemon.utilization.detect_kubernetes = $NEWRELIC_DAEMON_UTILIZATION_DETECT_KUBERNETES ; override
 
 
 ; Setting: newrelic.daemon.app_timeout
@@ -387,7 +387,7 @@ newrelic.daemon.utilization.detect_kubernetes = $NEWRELIC_DAEMON_UTILIZATION_DET
 ;          we suggest using a value of twice the interval (so, for an hourly
 ;          background job, set the timeout to 2 hours).
 ;newrelic.daemon.app_timeout = 10m
-newrelic.daemon.app_timeout = $NEWRELIC_DAEMON_APP_TIMEOUT
+newrelic.daemon.app_timeout = $NEWRELIC_DAEMON_APP_TIMEOUT ; override
 
 ; Setting: newrelic.daemon.app_connect_timeout
 ; Type   : time specification string ("1s", "5m", etc)
@@ -408,7 +408,7 @@ newrelic.daemon.app_timeout = $NEWRELIC_DAEMON_APP_TIMEOUT
 ;          block for the given timeout at every transaction start.
 ;
 ;newrelic.daemon.app_connect_timeout = 0
-newrelic.daemon.app_connect_timeout = $NEWRELIC_DAEMON_APP_CONNECT_TIMEOUT
+newrelic.daemon.app_connect_timeout = $NEWRELIC_DAEMON_APP_CONNECT_TIMEOUT ; override
 
 ; Setting: newrelic.daemon.start_timeout
 ; Type   : time specification string ("1s", "5m", etc)
@@ -429,7 +429,7 @@ newrelic.daemon.app_connect_timeout = $NEWRELIC_DAEMON_APP_CONNECT_TIMEOUT
 ;          block for the given timeout at every transaction start.
 ;
 ;newrelic.daemon.start_timeout = 0
-newrelic.daemon.start_timeout = $NEWRELIC_DAEMON_START_TIMEOUT
+newrelic.daemon.start_timeout = $NEWRELIC_DAEMON_START_TIMEOUT ; override
 
 ; Setting: newrelic.error_collector.enabled
 ; Type   : boolean
@@ -441,7 +441,7 @@ newrelic.daemon.start_timeout = $NEWRELIC_DAEMON_START_TIMEOUT
 ;          this to be disabled regardless of any value you set for it.
 ;
 ;newrelic.error_collector.enabled = true
-newrelic.error_collector.enabled = $NEWRELIC_ERROR_COLLECTOR_ENABLED
+newrelic.error_collector.enabled = $NEWRELIC_ERROR_COLLECTOR_ENABLED ; override
 
 ; Setting: newrelic.error_collector.ignore_user_exception_handler
 ; Type   : boolean
@@ -457,7 +457,7 @@ newrelic.error_collector.enabled = $NEWRELIC_ERROR_COLLECTOR_ENABLED
 ;          collector.
 ;
 ;newrelic.error_collector.ignore_user_exception_handler = false
-newrelic.error_collector.ignore_user_exception_handler = $NEWRELIC_ERROR_COLLECTOR_IGNORE_USER_EXCEPTION_HANDLER
+newrelic.error_collector.ignore_user_exception_handler = $NEWRELIC_ERROR_COLLECTOR_IGNORE_USER_EXCEPTION_HANDLER ; override
 
 ; Setting: newrelic.error_collector.ignore_exceptions
 ; Type:    string
@@ -474,7 +474,7 @@ newrelic.error_collector.ignore_user_exception_handler = $NEWRELIC_ERROR_COLLECT
 ;          subject to filtering.
 ;
 ;newrelic.error_collector.ignore_exceptions = ""
-newrelic.error_collector.ignore_exceptions = "$NEWRELIC_ERROR_COLLECTOR_IGNORE_EXCEPTIONS"
+newrelic.error_collector.ignore_exceptions = "$NEWRELIC_ERROR_COLLECTOR_IGNORE_EXCEPTIONS" ; override
 
 ; Setting: newrelic.error_collector.ignore_errors
 ; Type:    int or a bitwise expression of PHP-defined error constants
@@ -499,7 +499,7 @@ newrelic.error_collector.ignore_exceptions = "$NEWRELIC_ERROR_COLLECTOR_IGNORE_E
 ;          using the newrelic_notice_error API.
 ;
 ;newrelic.error_collector.ignore_errors = 0
-newrelic.error_collector.ignore_errors = $NEWRELIC_ERROR_COLLECTOR_IGNORE_ERRORS
+newrelic.error_collector.ignore_errors = $NEWRELIC_ERROR_COLLECTOR_IGNORE_ERRORS ; override
 
 ; Setting: newrelic.error_collector.record_database_errors
 ; Type   : boolean
@@ -512,7 +512,7 @@ newrelic.error_collector.ignore_errors = $NEWRELIC_ERROR_COLLECTOR_IGNORE_ERRORS
 ;          above and the account subscription level permits error trapping.
 ;
 ;newrelic.error_collector.record_database_errors = false
-newrelic.error_collector.record_database_errors = $NEWRELIC_ERROR_COLLECTOR_RECORD_DATABASE_ERRORS
+newrelic.error_collector.record_database_errors = $NEWRELIC_ERROR_COLLECTOR_RECORD_DATABASE_ERRORS ; override
 
 ; Setting: newrelic.error_collector.prioritize_api_errors
 ; Type   : boolean
@@ -523,7 +523,7 @@ newrelic.error_collector.record_database_errors = $NEWRELIC_ERROR_COLLECTOR_RECO
 ;          priority to such errors.
 ;
 ;newrelic.error_collector.prioritize_api_errors = false
-newrelic.error_collector.prioritize_api_errors = $NEWRELIC_ERROR_COLLECTOR_PRIORITIZE_API_ERRORS
+newrelic.error_collector.prioritize_api_errors = $NEWRELIC_ERROR_COLLECTOR_PRIORITIZE_API_ERRORS ; override
 
 ; Setting: newrelic.browser_monitoring.auto_instrument
 ; Type   : boolean
@@ -534,7 +534,7 @@ newrelic.error_collector.prioritize_api_errors = $NEWRELIC_ERROR_COLLECTOR_PRIOR
 ;          in HTML output that will time the actual end-user experience.
 ;
 ;newrelic.browser_monitoring.auto_instrument = true
-newrelic.browser_monitoring.auto_instrument = $NEWRELIC_BROWSER_MONITORING_AUTO_INSTRUMENT
+newrelic.browser_monitoring.auto_instrument = $NEWRELIC_BROWSER_MONITORING_AUTO_INSTRUMENT ; override
 
 ; Setting: newrelic.transaction_tracer.enabled
 ; Type   : boolean
@@ -550,7 +550,7 @@ newrelic.browser_monitoring.auto_instrument = $NEWRELIC_BROWSER_MONITORING_AUTO_
 ;          regardless of what you set here.
 ;
 ;newrelic.transaction_tracer.enabled = true
-newrelic.transaction_tracer.enabled = $NEWRELIC_TRANSACTION_TRACER_ENABLED
+newrelic.transaction_tracer.enabled = $NEWRELIC_TRANSACTION_TRACER_ENABLED ; override
 
 ; Setting: newrelic.transaction_tracer.threshold
 ; Type   : string with a time specification or the word "apdex_f"
@@ -564,7 +564,7 @@ newrelic.transaction_tracer.enabled = $NEWRELIC_TRANSACTION_TRACER_ENABLED
 ;          is the default.
 ;
 ;newrelic.transaction_tracer.threshold = "apdex_f"
-newrelic.transaction_tracer.threshold = "$NEWRELIC_TRANSACTION_TRACER_THRESHOLD"
+newrelic.transaction_tracer.threshold = "$NEWRELIC_TRANSACTION_TRACER_THRESHOLD" ; override
 
 ; Setting: newrelic.transaction_tracer.detail
 ; Type   : integer in the range 0-1
@@ -578,7 +578,7 @@ newrelic.transaction_tracer.threshold = "$NEWRELIC_TRANSACTION_TRACER_THRESHOLD"
 ;          In earlier releases of the agent this was known as "top100".
 ;
 ;newrelic.transaction_tracer.detail = 1
-newrelic.transaction_tracer.detail = $NEWRELIC_TRANSACTION_TRACER_DETAIL
+newrelic.transaction_tracer.detail = $NEWRELIC_TRANSACTION_TRACER_DETAIL ; override
 
 ; Setting: newrelic.transaction_tracer.slow_sql
 ; Type   : boolean
@@ -589,7 +589,7 @@ newrelic.transaction_tracer.detail = $NEWRELIC_TRANSACTION_TRACER_DETAIL
 ;          where the call occurred in your code.
 ;
 ;newrelic.transaction_tracer.slow_sql = true
-newrelic.transaction_tracer.slow_sql = $NEWRELIC_TRANSACTION_TRACER_SLOW_SQL
+newrelic.transaction_tracer.slow_sql = $NEWRELIC_TRANSACTION_TRACER_SLOW_SQL ; override
 
 ; Setting: newrelic.transaction_tracer.stack_trace_threshold
 ; Type   : time specification string ("500ms", "1s750ms" etc)
@@ -599,7 +599,7 @@ newrelic.transaction_tracer.slow_sql = $NEWRELIC_TRANSACTION_TRACER_SLOW_SQL
 ;          stack trace for a transaction trace.
 ;
 ;newrelic.transaction_tracer.stack_trace_threshold = 500
-newrelic.transaction_tracer.stack_trace_threshold = $NEWRELIC_TRANSACTION_TRACER_STACK_TRACE_THRESHOLD
+newrelic.transaction_tracer.stack_trace_threshold = $NEWRELIC_TRANSACTION_TRACER_STACK_TRACE_THRESHOLD ; override
 
 ; Setting: newrelic.transaction_tracer.explain_enabled
 ; Type   : boolean
@@ -610,7 +610,7 @@ newrelic.transaction_tracer.stack_trace_threshold = $NEWRELIC_TRANSACTION_TRACER
 ;          for requesting explain plans is defined below.
 ;
 ;newrelic.transaction_tracer.explain_enabled = true
-newrelic.transaction_tracer.explain_enabled = $NEWRELIC_TRANSACTION_TRACER_EXPLAIN_ENABLED
+newrelic.transaction_tracer.explain_enabled = $NEWRELIC_TRANSACTION_TRACER_EXPLAIN_ENABLED ; override
 
 ; Setting: newrelic.transaction_tracer.explain_threshold
 ; Type   : time specification string ("750ms", "1s 500ms" etc)
@@ -624,7 +624,7 @@ newrelic.transaction_tracer.explain_enabled = $NEWRELIC_TRANSACTION_TRACER_EXPLA
 ;          Only relevant if explain_enabled above is set to true.
 ;
 ;newrelic.transaction_tracer.explain_threshold = 500
-newrelic.transaction_tracer.explain_threshold = $NEWRELIC_TRANSACTION_TRACER_EXPLAIN_THRESHOLD
+newrelic.transaction_tracer.explain_threshold = $NEWRELIC_TRANSACTION_TRACER_EXPLAIN_THRESHOLD ; override
 
 ; Setting: newrelic.transaction_tracer.record_sql
 ; Type   : "off", "raw" or "obfuscated"
@@ -637,7 +637,7 @@ newrelic.transaction_tracer.explain_threshold = $NEWRELIC_TRANSACTION_TRACER_EXP
 ;          can expose sensitive and private customer data.
 ;
 ;newrelic.transaction_tracer.record_sql = "obfuscated"
-newrelic.transaction_tracer.record_sql = "$NEWRELIC_TRANSACTION_TRACER_RECORD_SQL"
+newrelic.transaction_tracer.record_sql = "$NEWRELIC_TRANSACTION_TRACER_RECORD_SQL" ; override
 
 ; Setting: newrelic.transaction_tracer.custom
 ; Type   : string
@@ -649,7 +649,7 @@ newrelic.transaction_tracer.record_sql = "$NEWRELIC_TRANSACTION_TRACER_RECORD_SQ
 ;          separated list of function or class method names.
 ;
 ;newrelic.transaction_tracer.custom = ""
-newrelic.transaction_tracer.custom = "$NEWRELIC_TRANSACTION_TRACER_CUSTOM"
+newrelic.transaction_tracer.custom = "$NEWRELIC_TRANSACTION_TRACER_CUSTOM" ; override
 
 ; Setting: newrelic.transaction_tracer.internal_functions_enabled
 ; Type   : boolean
@@ -666,7 +666,7 @@ newrelic.transaction_tracer.custom = "$NEWRELIC_TRANSACTION_TRACER_CUSTOM"
 ;          to be slow.
 ;
 ;newrelic.transaction_tracer.internal_functions_enabled = false
-newrelic.transaction_tracer.internal_functions_enabled = $NEWRELIC_TRANSACTION_TRACER_INTERNAL_FUNCTIONS_ENABLED
+newrelic.transaction_tracer.internal_functions_enabled = $NEWRELIC_TRANSACTION_TRACER_INTERNAL_FUNCTIONS_ENABLED ; override
 
 ; Setting: newrelic.framework
 ; Type   : string
@@ -687,7 +687,7 @@ newrelic.transaction_tracer.internal_functions_enabled = $NEWRELIC_TRANSACTION_T
 ;          now only supports Symfony 3.x.
 ;
 ;newrelic.framework = ""
-newrelic.framework = "$NEWRELIC_FRAMEWORK"
+newrelic.framework = "$NEWRELIC_FRAMEWORK" ; override
 
 ; Setting: newrelic.webtransaction.name.remove_trailing_path
 ; Type   : boolean
@@ -700,7 +700,7 @@ newrelic.framework = "$NEWRELIC_FRAMEWORK"
 ;          "/path/to/foo.php/xyz/zy".
 ;
 ;newrelic.webtransaction.name.remove_trailing_path = false
-newrelic.webtransaction.name.remove_trailing_path = $NEWRELIC_WEBTRANSACTION_NAME_REMOVE_TRAILING_PATH
+newrelic.webtransaction.name.remove_trailing_path = $NEWRELIC_WEBTRANSACTION_NAME_REMOVE_TRAILING_PATH ; override
 
 ; Setting: newrelic.webtransaction.name.functions
 ; Type   : string
@@ -716,7 +716,7 @@ newrelic.webtransaction.name.remove_trailing_path = $NEWRELIC_WEBTRANSACTION_NAM
 ;          transaction.
 ;
 ;newrelic.webtransaction.name.functions = ""
-newrelic.webtransaction.name.functions = "$NEWRELIC_WEBTRANSACTION_NAME_FUNCTIONS"
+newrelic.webtransaction.name.functions = "$NEWRELIC_WEBTRANSACTION_NAME_FUNCTIONS" ; override
 
 ; Setting: newrelic.webtransaction.name.files
 ; Type   : string
@@ -727,7 +727,7 @@ newrelic.webtransaction.name.functions = "$NEWRELIC_WEBTRANSACTION_NAME_FUNCTION
 ;          expressions.
 ;
 ;newrelic.webtransaction.name.files = ""
-newrelic.webtransaction.name.files = "$NEWRELIC_WEBTRANSACTION_NAME_FILES"
+newrelic.webtransaction.name.files = "$NEWRELIC_WEBTRANSACTION_NAME_FILES" ; override
 
 ; Setting: newrelic.daemon.auditlog
 ; Type   : string
@@ -743,7 +743,7 @@ newrelic.webtransaction.name.files = "$NEWRELIC_WEBTRANSACTION_NAME_FILES"
 ;          then audit logging will be silently ignored.
 ;
 ;newrelic.daemon.auditlog = "/var/log/newrelic/audit.log"
-newrelic.daemon.auditlog = "$NEWRELIC_DAEMON_AUDITLOG"
+newrelic.daemon.auditlog = "$NEWRELIC_DAEMON_AUDITLOG" ; override
 
 ; Setting: newrelic.transaction_events.enabled
 ; Type   : boolean
@@ -755,7 +755,7 @@ newrelic.daemon.auditlog = "$NEWRELIC_DAEMON_AUDITLOG"
 ;          newrelic.analytics_events.enabled.
 ;
 ;newrelic.transaction_events.enabled = true
-newrelic.transaction_events.enabled = $NEWRELIC_TRANSACTION_EVENTS_ENABLED
+newrelic.transaction_events.enabled = $NEWRELIC_TRANSACTION_EVENTS_ENABLED ; override
 
 ; Setting: newrelic.attributes.enabled
 ; Type   : boolean
@@ -768,7 +768,7 @@ newrelic.transaction_events.enabled = $NEWRELIC_TRANSACTION_EVENTS_ENABLED
 ;          https://docs.newrelic.com/docs/agents/manage-apm-agents/agent-metrics/agent-attributes
 ;
 ;newrelic.attributes.enabled = true
-newrelic.attributes.enabled = $NEWRELIC_ATTRIBUTES_ENABLED
+newrelic.attributes.enabled = $NEWRELIC_ATTRIBUTES_ENABLED ; override
 
 ; Setting: newrelic.transaction_events.attributes.enabled
 ;          newrelic.transaction_tracer.attributes.enabled
@@ -790,15 +790,15 @@ newrelic.attributes.enabled = $NEWRELIC_ATTRIBUTES_ENABLED
 ;          newrelic.browser_monitoring.capture_attributes
 ;
 ;newrelic.transaction_events.attributes.enabled = true
-newrelic.transaction_events.attributes.enabled = $NEWRELIC_TRANSACTION_EVENTS_ATTRIBUTES_ENABLED
+newrelic.transaction_events.attributes.enabled = $NEWRELIC_TRANSACTION_EVENTS_ATTRIBUTES_ENABLED ; override
 ;newrelic.transaction_tracer.attributes.enabled = true
-newrelic.transaction_tracer.attributes.enabled = $NEWRELIC_TRANSACTION_TRACER_ATTRIBUTES_ENABLED
+newrelic.transaction_tracer.attributes.enabled = $NEWRELIC_TRANSACTION_TRACER_ATTRIBUTES_ENABLED ; override
 ;newrelic.error_collector.attributes.enabled = true
-newrelic.error_collector.attributes.enabled = $NEWRELIC_ERROR_COLLECTOR_ATTRIBUTES_ENABLED
+newrelic.error_collector.attributes.enabled = $NEWRELIC_ERROR_COLLECTOR_ATTRIBUTES_ENABLED ; override
 ;newrelic.browser_monitoring.attributes.enabled = false
-newrelic.browser_monitoring.attributes.enabled = $NEWRELIC_BROWSER_MONITORING_ATTRIBUTES_ENABLED
+newrelic.browser_monitoring.attributes.enabled = $NEWRELIC_BROWSER_MONITORING_ATTRIBUTES_ENABLED ; override
 ;newrelic.span_events.attributes.enabled = true
-newrelic.span_events.attributes.enabled = $NEWRELIC_SPAN_EVENTS_ATTRIBUTES_ENABLED
+newrelic.span_events.attributes.enabled = $NEWRELIC_SPAN_EVENTS_ATTRIBUTES_ENABLED ; override
 
 ; Setting: newrelic.attributes.include
 ;          newrelic.attributes.exclude
@@ -853,34 +853,34 @@ newrelic.span_events.attributes.enabled = $NEWRELIC_SPAN_EVENTS_ATTRIBUTES_ENABL
 ;          https://docs.newrelic.com/docs/agents/manage-apm-agents/agent-metrics/agent-attributes
 ;
 ;newrelic.attributes.include = ""
-newrelic.attributes.include = "$NEWRELIC_ATTRIBUTES_INCLUDE"
+newrelic.attributes.include = "$NEWRELIC_ATTRIBUTES_INCLUDE" ; override
 ;newrelic.attributes.exclude = ""
-newrelic.attributes.exclude = "$NEWRELIC_ATTRIBUTES_EXCLUDE"
+newrelic.attributes.exclude = "$NEWRELIC_ATTRIBUTES_EXCLUDE" ; override
 ;
 ;newrelic.transaction_events.attributes.include = ""
-newrelic.transaction_events.attributes.include = "$NEWRELIC_TRANSACTION_EVENTS_ATTRIBUTES_INCLUDE"
+newrelic.transaction_events.attributes.include = "$NEWRELIC_TRANSACTION_EVENTS_ATTRIBUTES_INCLUDE" ; override
 ;newrelic.transaction_events.attributes.exclude = ""
-newrelic.transaction_events.attributes.exclude = "$NEWRELIC_TRANSACTION_EVENTS_ATTRIBUTES_EXCLUDE"
+newrelic.transaction_events.attributes.exclude = "$NEWRELIC_TRANSACTION_EVENTS_ATTRIBUTES_EXCLUDE" ; override
 ;
 ;newrelic.transaction_tracer.attributes.include = ""
-newrelic.transaction_tracer.attributes.include = "$NEWRELIC_TRANSACTION_TRACER_ATTRIBUTES_INCLUDE"
+newrelic.transaction_tracer.attributes.include = "$NEWRELIC_TRANSACTION_TRACER_ATTRIBUTES_INCLUDE" ; override
 ;newrelic.transaction_tracer.attributes.exclude = ""
-newrelic.transaction_tracer.attributes.exclude = "$NEWRELIC_TRANSACTION_TRACER_ATTRIBUTES_EXCLUDE"
+newrelic.transaction_tracer.attributes.exclude = "$NEWRELIC_TRANSACTION_TRACER_ATTRIBUTES_EXCLUDE" ; override
 ;
 ;newrelic.error_collector.attributes.include = ""
-newrelic.error_collector.attributes.include = "$NEWRELIC_ERROR_COLLECTOR_ATTRIBUTES_INCLUDE"
+newrelic.error_collector.attributes.include = "$NEWRELIC_ERROR_COLLECTOR_ATTRIBUTES_INCLUDE" ; override
 ;newrelic.error_collector.attributes.exclude = ""
-newrelic.error_collector.attributes.exclude = "$NEWRELIC_ERROR_COLLECTOR_ATTRIBUTES_EXCLUDE"
+newrelic.error_collector.attributes.exclude = "$NEWRELIC_ERROR_COLLECTOR_ATTRIBUTES_EXCLUDE" ; override
 ;
 ;newrelic.browser_monitoring.attributes.include = ""
-newrelic.browser_monitoring.attributes.include = "$NEWRELIC_BROWSER_MONITORING_ATTRIBUTES_INCLUDE"
+newrelic.browser_monitoring.attributes.include = "$NEWRELIC_BROWSER_MONITORING_ATTRIBUTES_INCLUDE" ; override
 ;newrelic.browser_monitoring.attributes.exclude = ""
-newrelic.browser_monitoring.attributes.exclude = "$NEWRELIC_BROWSER_MONITORING_ATTRIBUTES_EXCLUDE"
+newrelic.browser_monitoring.attributes.exclude = "$NEWRELIC_BROWSER_MONITORING_ATTRIBUTES_EXCLUDE" ; override
 ;
 ;newrelic.span_events.attributes.include = ""
-newrelic.span_events.attributes.include = "$NEWRELIC_SPAN_EVENTS_ATTRIBUTES_INCLUDE"
+newrelic.span_events.attributes.include = "$NEWRELIC_SPAN_EVENTS_ATTRIBUTES_INCLUDE" ; override
 ;newrelic.span_events.attributes.exclude = ""
-newrelic.span_events.attributes.exclude = "$NEWRELIC_SPAN_EVENTS_ATTRIBUTES_EXCLUDE"
+newrelic.span_events.attributes.exclude = "$NEWRELIC_SPAN_EVENTS_ATTRIBUTES_EXCLUDE" ; override
 
 ; Setting: newrelic.feature_flag
 ; Type   : string
@@ -891,7 +891,7 @@ newrelic.span_events.attributes.exclude = "$NEWRELIC_SPAN_EVENTS_ATTRIBUTES_EXCL
 ;          enabled by default in later versions of the PHP agent.
 ;
 ;newrelic.feature_flag = ""
-newrelic.feature_flag = "$NEWRELIC_FEATURE_FLAG"
+newrelic.feature_flag = "$NEWRELIC_FEATURE_FLAG" ; override
 
 ; Setting: newrelic.custom_insights_events.enabled
 ; Type   : boolean
@@ -900,7 +900,7 @@ newrelic.feature_flag = "$NEWRELIC_FEATURE_FLAG"
 ; Info   : Enables or disables the API function newrelic_record_custom_event.
 ;
 ;newrelic.custom_insights_events.enabled = true
-newrelic.custom_insights_events.enabled = $NEWRELIC_CUSTOM_INSIGHTS_EVENTS_ENABLED
+newrelic.custom_insights_events.enabled = $NEWRELIC_CUSTOM_INSIGHTS_EVENTS_ENABLED ; override
 
 ; Setting: newrelic.custom_events.max_samples_stored
 ; Type   : integer
@@ -911,7 +911,7 @@ newrelic.custom_insights_events.enabled = $NEWRELIC_CUSTOM_INSIGHTS_EVENTS_ENABL
 ;          is 100000 events per minute.
 ;
 ;newrelic.custom_events.max_samples_stored = 30000
-newrelic.custom_events.max_samples_stored = $NEWRELIC_CUSTOM_EVENTS_MAX_SAMPLES_STORED
+newrelic.custom_events.max_samples_stored = $NEWRELIC_CUSTOM_EVENTS_MAX_SAMPLES_STORED ; override
 
 ; Setting: newrelic.labels
 ; Type   : string (Use quotes)
@@ -932,7 +932,7 @@ newrelic.custom_events.max_samples_stored = $NEWRELIC_CUSTOM_EVENTS_MAX_SAMPLES_
 ;          E.g., "Server:One;Data Center:Primary"
 ;
 ;newrelic.labels = ""
-newrelic.labels = "$NEWRELIC_LABELS"
+newrelic.labels = "$NEWRELIC_LABELS" ; override
 
 ; Setting: newrelic.synthetics.enabled
 ; Type   : boolean
@@ -943,7 +943,7 @@ newrelic.labels = "$NEWRELIC_LABELS"
 ;          https://docs.newrelic.com/docs/synthetics/new-relic-synthetics/getting-started/new-relic-synthetics
 ;
 ;newrelic.synthetics.enabled = true
-newrelic.synthetics.enabled = $NEWRELIC_SYNTHETICS_ENABLED
+newrelic.synthetics.enabled = $NEWRELIC_SYNTHETICS_ENABLED ; override
 
 ; Setting: newrelic.cross_application_tracer.enabled
 ; Type   : boolean
@@ -953,7 +953,7 @@ newrelic.synthetics.enabled = $NEWRELIC_SYNTHETICS_ENABLED
 ;          NOTE: As of April 2022 CAT has been deprecated and will be removed at a future date.
 ;
 ;newrelic.cross_application_tracer.enabled = false
-newrelic.cross_application_tracer.enabled = $NEWRELIC_CROSS_APPLICATION_TRACER_ENABLED
+newrelic.cross_application_tracer.enabled = $NEWRELIC_CROSS_APPLICATION_TRACER_ENABLED ; override
 
 ; Setting: newrelic.distributed_tracing_enabled
 ; Type   : boolean
@@ -967,7 +967,7 @@ newrelic.cross_application_tracer.enabled = $NEWRELIC_CROSS_APPLICATION_TRACER_E
 ;          https://docs.newrelic.com/docs/transition-guide-distributed-tracing
 ;
 ;newrelic.distributed_tracing_enabled = true
-newrelic.distributed_tracing_enabled = $NEWRELIC_DISTRIBUTED_TRACING_ENABLED
+newrelic.distributed_tracing_enabled = $NEWRELIC_DISTRIBUTED_TRACING_ENABLED ; override
 
 ; Setting: newrelic.distributed_tracing_exclude_newrelic_header
 ; Type   : boolean
@@ -984,7 +984,7 @@ newrelic.distributed_tracing_enabled = $NEWRELIC_DISTRIBUTED_TRACING_ENABLED
 ;          prioritize them over New Relic headers for distributed tracing.    
 ;
 ;newrelic.distributed_tracing_exclude_newrelic_header = false
-newrelic.distributed_tracing_exclude_newrelic_header = $NEWRELIC_DISTRIBUTED_TRACING_EXCLUDE_NEWRELIC_HEADER
+newrelic.distributed_tracing_exclude_newrelic_header = $NEWRELIC_DISTRIBUTED_TRACING_EXCLUDE_NEWRELIC_HEADER ; override
 
 ; Setting: newrelic.span_events_enabled
 ; Type   : boolean
@@ -994,7 +994,7 @@ newrelic.distributed_tracing_exclude_newrelic_header = $NEWRELIC_DISTRIBUTED_TRA
 ;          Distributed Tracing to be enabled.
 ;
 ;newrelic.span_events_enabled = true
-newrelic.span_events_enabled = $NEWRELIC_SPAN_EVENTS_ENABLED
+newrelic.span_events_enabled = $NEWRELIC_SPAN_EVENTS_ENABLED ; override
 
 ; Setting: newrelic.span_events.max_samples_stored
 ; Type   : unsigned integer
@@ -1014,7 +1014,7 @@ newrelic.span_events_enabled = $NEWRELIC_SPAN_EVENTS_ENABLED
 ;           c) lower the value for newrelic.span_events.max_samples_stored
 ;
 ;newrelic.span_events.max_samples_stored = 0
-newrelic.span_events.max_samples_stored = $NEWRELIC_SPAN_EVENTS_MAX_SAMPLES_STORED
+newrelic.span_events.max_samples_stored = $NEWRELIC_SPAN_EVENTS_MAX_SAMPLES_STORED ; override
 
 
 ; Setting: newrelic.infinite_tracing.trace_observer.host
@@ -1061,7 +1061,7 @@ newrelic.span_events.max_samples_stored = $NEWRELIC_SPAN_EVENTS_MAX_SAMPLES_STOR
 ;          This requires Slow SQLs to be enabled.
 ;
 ;newrelic.transaction_tracer.gather_input_queries = true
-newrelic.transaction_tracer.gather_input_queries = $NEWRELIC_TRANSACTION_TRACER_GATHER_INPUT_QUERIES
+newrelic.transaction_tracer.gather_input_queries = $NEWRELIC_TRANSACTION_TRACER_GATHER_INPUT_QUERIES ; override
 
 ; Setting: newrelic.error_collector.capture_events
 ; Type   : boolean
@@ -1071,7 +1071,7 @@ newrelic.transaction_tracer.gather_input_queries = $NEWRELIC_TRANSACTION_TRACER_
 ;          Error Analytics in the UI.
 ;
 ;newrelic.error_collector.capture_events = true
-newrelic.error_collector.capture_events = $NEWRELIC_ERROR_COLLECTOR_CAPTURE_EVENTS
+newrelic.error_collector.capture_events = $NEWRELIC_ERROR_COLLECTOR_CAPTURE_EVENTS ; override
 
 ; Setting: newrelic.guzzle.enabled
 ; Type   : boolean
@@ -1080,7 +1080,7 @@ newrelic.error_collector.capture_events = $NEWRELIC_ERROR_COLLECTOR_CAPTURE_EVEN
 ; Info   : Enables or disables support for the Guzzle library.
 ;
 ;newrelic.guzzle.enabled = true
-newrelic.guzzle.enabled = $NEWRELIC_GUZZLE_ENABLED
+newrelic.guzzle.enabled = $NEWRELIC_GUZZLE_ENABLED ; override
 
 ; Setting: newrelic.phpunit_events.enabled
 ; Type   : boolean
@@ -1097,7 +1097,7 @@ newrelic.guzzle.enabled = $NEWRELIC_GUZZLE_ENABLED
 ;          flag, any offending output from a risky test will also be included.
 ;
 ;newrelic.phpunit_events.enabled = false
-newrelic.phpunit_events.enabled = $NEWRELIC_PHPUNIT_EVENTS_ENABLED
+newrelic.phpunit_events.enabled = $NEWRELIC_PHPUNIT_EVENTS_ENABLED ; override
 
 ; Setting: newrelic.datastore_tracer.instance_reporting.enabled
 ; Type   : boolean
@@ -1108,7 +1108,7 @@ newrelic.phpunit_events.enabled = $NEWRELIC_PHPUNIT_EVENTS_ENABLED
 ;          metric and as attributes on transaction traces and slow SQL traces.
 ;
 ;newrelic.datastore_tracer.instance_reporting.enabled = true
-newrelic.datastore_tracer.instance_reporting.enabled = $NEWRELIC_DATASTORE_TRACER_INSTANCE_REPORTING_ENABLED
+newrelic.datastore_tracer.instance_reporting.enabled = $NEWRELIC_DATASTORE_TRACER_INSTANCE_REPORTING_ENABLED ; override
 
 ; Setting: newrelic.datastore_tracer.database_name_reporting.enabled
 ; Type   : boolean
@@ -1119,7 +1119,7 @@ newrelic.datastore_tracer.instance_reporting.enabled = $NEWRELIC_DATASTORE_TRACE
 ;          SQL traces.
 ;
 ;newrelic.datastore_tracer.database_name_reporting.enabled = true
-newrelic.datastore_tracer.database_name_reporting.enabled = $NEWRELIC_DATASTORE_TRACER_DATABASE_NAME_REPORTING_ENABLED
+newrelic.datastore_tracer.database_name_reporting.enabled = $NEWRELIC_DATASTORE_TRACER_DATABASE_NAME_REPORTING_ENABLED ; override
 
 ; Setting: newrelic.security_policies_token
 ; Type   : string
@@ -1134,7 +1134,7 @@ newrelic.datastore_tracer.database_name_reporting.enabled = $NEWRELIC_DATASTORE_
 ;          agent will not connect.
 ;
 ;newrelic.security_policies_token = ""
-newrelic.security_policies_token = "$NEWRELIC_SECURITY_POLICIES_TOKEN"
+newrelic.security_policies_token = "$NEWRELIC_SECURITY_POLICIES_TOKEN" ; override
 
 ; Setting: newrelic.preload_framework_library_detection
 ; Type   : boolean
@@ -1146,7 +1146,7 @@ newrelic.security_policies_token = "$NEWRELIC_SECURITY_POLICIES_TOKEN"
 ;          is set).
 ;
 ;newrelic.preload_framework_library_detection = true
-newrelic.preload_framework_library_detection = $NEWRELIC_PRELOAD_FRAMEWORK_LIBRARY_DETECTION
+newrelic.preload_framework_library_detection = $NEWRELIC_PRELOAD_FRAMEWORK_LIBRARY_DETECTION ; override
 
 ; setting: newrelic.transaction_tracer.max_segments_web
 ; type   : integer in the range 0 - 2^31-1
@@ -1179,7 +1179,7 @@ newrelic.preload_framework_library_detection = $NEWRELIC_PRELOAD_FRAMEWORK_LIBRA
 ;          effect PHP CLI processes. To set a limit for CLI processes use
 ;          newrelic.transaction_tracer.max_segments_cli.
 ;newrelic.transaction_tracer.max_segments_web = 0
-newrelic.transaction_tracer.max_segments_web = $NEWRELIC_TRANSACTION_TRACER_MAX_SEGMENTS_WEB
+newrelic.transaction_tracer.max_segments_web = $NEWRELIC_TRANSACTION_TRACER_MAX_SEGMENTS_WEB ; override
 
 ; setting: newrelic.transaction_tracer.max_segments_cli
 ; type   : integer in the range 0 - 2^31-1
@@ -1211,7 +1211,7 @@ newrelic.transaction_tracer.max_segments_web = $NEWRELIC_TRANSACTION_TRACER_MAX_
 ;          effect PHP web processes. To set a limit for web processes use
 ;          newrelic.transaction_tracer.max_segments_web.
 ;newrelic.transaction_tracer.max_segments_cli = 100000
-newrelic.transaction_tracer.max_segments_cli = $NEWRELIC_TRANSACTION_TRACER_MAX_SEGMENTS_CLI
+newrelic.transaction_tracer.max_segments_cli = $NEWRELIC_TRANSACTION_TRACER_MAX_SEGMENTS_CLI ; override
 
 ; Setting: newrelic.capture_params
 ; Info   : This setting has been deprecated.
@@ -1243,7 +1243,7 @@ newrelic.transaction_tracer.max_segments_cli = $NEWRELIC_TRANSACTION_TRACER_MAX_
 ; Info   : Indicates if Drupal modules, hooks and views are to be instrumented.
 ;
 ;newrelic.framework.drupal.modules = true
-newrelic.framework.drupal.modules = $NEWRELIC_FRAMEWORK_DRUPAL_MODULES
+newrelic.framework.drupal.modules = $NEWRELIC_FRAMEWORK_DRUPAL_MODULES ; override
 
 ; Setting: newrelic.framework.wordpress.hooks
 ; Type   : boolean
@@ -1252,7 +1252,7 @@ newrelic.framework.drupal.modules = $NEWRELIC_FRAMEWORK_DRUPAL_MODULES
 ; Info   : Indicates if WordPress hooks are to be instrumented.
 ;
 ;newrelic.framework.wordpress.hooks = true
-newrelic.framework.wordpress.hooks = $NEWRELIC_FRAMEWORK_WORDPRESS_HOOKS
+newrelic.framework.wordpress.hooks = $NEWRELIC_FRAMEWORK_WORDPRESS_HOOKS ; override
 
 ; Setting: newrelic.application_logging.enabled
 ; Type   : boolean
@@ -1264,7 +1264,7 @@ newrelic.framework.wordpress.hooks = $NEWRELIC_FRAMEWORK_WORDPRESS_HOOKS
 ;          take effect.
 ;
 ;newrelic.application_logging.enabled = true
-newrelic.application_logging.enabled = $NEWRELIC_APPLICATION_LOGGING_ENABLED
+newrelic.application_logging.enabled = $NEWRELIC_APPLICATION_LOGGING_ENABLED ; override
 
 ; Setting: newrelic.application_logging.forwarding.enabled
 ; Type   : boolean
@@ -1273,7 +1273,7 @@ newrelic.application_logging.enabled = $NEWRELIC_APPLICATION_LOGGING_ENABLED
 ; Info   : Toggles whether the agent gathers log records for sending to New Relic.
 ;
 ;newrelic.application_logging.forwarding.enabled = true
-newrelic.application_logging.forwarding.enabled = $NEWRELIC_APPLICATION_LOGGING_FORWARDING_ENABLED
+newrelic.application_logging.forwarding.enabled = $NEWRELIC_APPLICATION_LOGGING_FORWARDING_ENABLED ; override
 
 ; Setting: newrelic.application_logging.forwarding.max_samples_stored
 ; Type   : integer
@@ -1283,7 +1283,7 @@ newrelic.application_logging.forwarding.enabled = $NEWRELIC_APPLICATION_LOGGING_
 ;          overall memory consumption when using log forwarding.
 ;
 ;newrelic.application_logging.forwarding.max_samples_stored = 10000
-newrelic.application_logging.forwarding.max_samples_stored = $NEWRELIC_APPLICATION_LOGGING_FORWARDING_MAX_SAMPLES_STORED
+newrelic.application_logging.forwarding.max_samples_stored = $NEWRELIC_APPLICATION_LOGGING_FORWARDING_MAX_SAMPLES_STORED ; override
 
 ; Setting: newrelic.application_logging.forwarding.log_level
 ; Type   : string
@@ -1307,7 +1307,7 @@ newrelic.application_logging.forwarding.max_samples_stored = $NEWRELIC_APPLICATI
 ;           "DEBUG"
 ;          
 ;newrelic.application_logging.forwarding.log_level = "WARNING"
-newrelic.application_logging.forwarding.log_level = "$NEWRELIC_APPLICATION_LOGGING_FORWARDING_LOG_LEVEL"
+newrelic.application_logging.forwarding.log_level = "$NEWRELIC_APPLICATION_LOGGING_FORWARDING_LOG_LEVEL" ; override
 
 ; Setting: newrelic.application_logging.metrics.enabled
 ; Type   : boolean
@@ -1318,7 +1318,7 @@ newrelic.application_logging.forwarding.log_level = "$NEWRELIC_APPLICATION_LOGGI
 ;          on the APM Summary page.
 ;
 ;newrelic.application_logging.metrics.enabled = true
-newrelic.application_logging.metrics.enabled = $NEWRELIC_APPLICATION_LOGGING_METRICS_ENABLED
+newrelic.application_logging.metrics.enabled = $NEWRELIC_APPLICATION_LOGGING_METRICS_ENABLED ; override
 
 ; Setting: newrelic.code_level_metrics.enabled
 ; Type   : boolean
@@ -1338,4 +1338,4 @@ newrelic.application_logging.metrics.enabled = $NEWRELIC_APPLICATION_LOGGING_MET
 ;           c) lower the value for newrelic.span_events.max_samples_stored
 ;
 ;newrelic.code_level_metrics.enabled = true
-newrelic.code_level_metrics.enabled = $NEWRELIC_CODE_LEVEL_METRICS_ENABLED
+newrelic.code_level_metrics.enabled = $NEWRELIC_CODE_LEVEL_METRICS_ENABLED ; override

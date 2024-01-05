@@ -76,7 +76,7 @@ apt install -y --no-install-recommends $PACKAGES;
 
 #
 # Install NewRelic PHP agent (only for AMD64)
-[[ "$X_ARCH" == "amd64" ]] && apt-get -y install newrelic-php5 && phpdismod newrelic;
+[[ "$X_ARCH" == "amd64" ]] && apt -y install newrelic-php5 && phpdismod newrelic;
 
 #
 # Install Composer

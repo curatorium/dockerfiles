@@ -11,24 +11,18 @@ apt update;
 #
 # Install PHP & PHP Modules (& their dependencies)
 PACKAGES=$(cat <<LIST
+  unzip
+
+  php$PHPVS-pcov
   php$PHPVS-phpdbg
   php$PHPVS-xdebug
 LIST
 );
 apt install -y --no-install-recommends $PACKAGES;
 
-AMD64_PACKAGES=$(cat <<LIST
-  unzip
-
-  php$PHPVS-pcov
-LIST
-);
-[[ "$X_ARCH" == "amd64" ]] && apt install -y --no-install-recommends $AMD64_PACKAGES;
-
 # Disable pcov & xdebug since they slow things down
 phpdismod pcov xdebug;
 
 #
 # Install all of the global Composer packages.
-cd /root/.config/composer/vendor-bin;
-find . -mindepth 1 -maxdepth 1 -type d -exec sh -c "cd {} && composer install" \;
+find /opt -mindepth 1 -maxdepth 1 -type d -exec sh -c "cd {} && composer install" \;

@@ -12,8 +12,10 @@ apt install -y --no-install-recommends jq;
 
 #
 # Install Q for CSV querying @see https://harelba.github.io/q/
-curl -1fsSL -o /tmp/q.deb https://github.com/harelba/q/releases/download/v3.1.6/q-text-as-data-3.1.6-1.x86_64.deb
-dpkg -i /tmp/q.deb;
+if [[ "$X_ARCH" == "amd64" ]]; then
+  curl -1fsSL -o /tmp/q.deb https://github.com/harelba/q/releases/download/v3.1.6/q-text-as-data-3.1.6-1.x86_64.deb
+  dpkg -i /tmp/q.deb;
+fi
 
 #
 # Install YQ for YAML manipulation @see https://mikefarah.gitbook.io/yq/

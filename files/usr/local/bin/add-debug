@@ -1,13 +1,12 @@
 #!/bin/bash -ex
 
-add-config;
-
 [[ -z "$(ls /var/lib/apt/lists)" ]] && apt update;
 
 PACKAGES=$(cat <<LIST
   bash-completion
   dnsutils
   inetutils-ping
+  iproute2
   less
   libmemcached-tools
   mariadb-client

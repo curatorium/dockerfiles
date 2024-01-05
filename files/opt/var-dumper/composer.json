@@ -1,0 +1,9 @@
+{
+  "config": {
+    "bin-dir": "/usr/local/bin"
+  },
+  "require": {
+    "symfony/console": "*",
+    "symfony/var-dumper": "*"
+  }
+}

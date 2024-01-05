@@ -4,14 +4,27 @@ services:
   base:
     build:
       args: &build-args
-        NODEVS: ${NODEVS:-18}
-        PHPVS: ${PHPVS:-8.2}
+        NODEVS: $NODEVS
+        PHPVS: $PHPVS
         X_ARCH: $X_ARCH
       target: base
-    env_file: .env
     image: $ORG/php-$PHPVS:base-$TS-$X_ARCH
-    labels: &labels
-      maintainer: Mihai Stancu <mihai.stancu@neurony.ro>
+    platform: linux/$X_ARCH
+
+  dumper:
+    build:
+      args: *build-args
+      target: dumper
+    depends_on: [base]
+    image: $ORG/php-$PHPVS:dumper-$TS-$X_ARCH
+    platform: linux/$X_ARCH
+
+  cloud-cli:
+    build:
+      args: *build-args
+      target: cloud-cli
+    depends_on: [base]
+    image: $ORG/php-$PHPVS:cloud-cli-$TS-$X_ARCH
     platform: linux/$X_ARCH
 
   qa:
@@ -20,9 +33,7 @@ services:
       target: qa
     command: [bash]
     depends_on: [base]
-    env_file: .env
     image: $ORG/php-$PHPVS:qa-$TS-$X_ARCH
-    labels: *labels
     platform: linux/$X_ARCH
 
   fs:
@@ -31,7 +42,5 @@ services:
       target: fs
     command: [bash]
     depends_on: [qa]
-    env_file: .env
     image: $ORG/php-$PHPVS:fs-$TS-$X_ARCH
-    labels: *labels
     platform: linux/$X_ARCH

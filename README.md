@@ -22,6 +22,7 @@ Image naming & tagging format:
   php-<PHPVS>:<role>-<semver>-<arch>
                 ▲               ▲
            base|qa|fs      amd64|arm64
+        dumper|cloud-cli
   ```
 
 The `<semver>` value can be `latest` or an incremental version number (expressed as `YY.MM`).
@@ -71,97 +72,125 @@ ex.: [neurony/php-8.2](https://hub.docker.com/r/neurony/php-8.2)
 ### Base Image `neurony/php-$PHPVS:base-$SEMVER`
 ex.: `neurony/php-8.2:base` or `neurony/php-8.2:base-23.11` or `neurony/php-8.2:base-23.11-amd64`
 
-- PHP Extensions:
-  - `php-amqp`
-  - `php-bcmath`
-  - `php-curl`
-  - `php-gd`
-  - `php-grpc`
-  - `php-http`
-  - `php-igbinary`
-  - `php-imagick`
-  - `php-intl`
-  - `php-mbstring`
-  - `php-memcached`
-  - `php-mongodb`
-  - `php-msgpack`
-  - `php-mysql`
-  - `php-newrelic`
-  - `php-odbc`
-  - `php-pgsql`
-  - `php-protobuf`
-  - `php-raphf`
-  - `php-redis`
-  - `php-soap`
-  - `php-sqlite3`
-  - `php-ssh2`
-  - `php-stomp`
-  - `php-timezonedb`
-  - `php-xml`
-  - `php-xsl`
-  - `php-yaml`
-  - `php-zip`
-  - `php-zmq`
-- Tools:
-  - `composer`
-  - `cron`
-  - `nginx`
-  - `php-fpm`
+PHP Extensions:
+
+- `php-amqp`
+- `php-bcmath`
+- `php-curl`
+- `php-gd`
+- `php-grpc`
+- `php-http`
+- `php-igbinary`
+- `php-imagick`
+- `php-intl`
+- `php-mbstring`
+- `php-memcached`
+- `php-mongodb`
+- `php-msgpack`
+- `php-mysql`
+- `php-newrelic`
+- `php-odbc`
+- `php-pgsql`
+- `php-protobuf`
+- `php-raphf`
+- `php-redis`
+- `php-soap`
+- `php-sqlite3`
+- `php-ssh2`
+- `php-stomp`
+- `php-timezonedb`
+- `php-xml`
+- `php-xsl`
+- `php-yaml`
+- `php-zip`
+- `php-zmq`
+
+Tools:
+
+- `composer`
+- `cron`
+- `nginx`
+- `php-fpm`
 
 
 ### QA image `neurony/php-$PHPVS:qa-$SEMVER`
 ex.: `neurony/php-8.2:qa` or `neurony/php-8.2:qa-23.11` or `neurony/php-8.2:qa-23.11-amd64`
 
 Extends the main image with the following PHP Extensions:
-  - `php-pcov` -- disabled by default
-  - `php-phpdbg`
-  - `php-xdebug` -- disabled by default
+
+- `php-pcov` -- disabled by default
+- `php-phpdbg`
+- `php-xdebug` -- disabled by default
 
 ...and tools:
-  - `codeception`
-  - `composer-require-checker`
-  - `composer-unused`
-  - `envsubst`
-  - `infection`
-  - `local-php-security-checker`
-  - `paratest`
-  - `phpat`
-  - `phpcpd`
-  - `phpinsights`
-  - `phplint`
-  - `phploc`
-  - `phpmnd`
-  - `phpstan` + `ekino/phpstan-banned-code` + `nunomaduro/larastan`
-  - `phpunit`
-  - `psalm` + `psalm/plugin-laravel`
-  - `psysh` -- a much improved PHP interactive shell
-  - `nickjj/wait-until`
+
+- `codeception`
+- `composer-require-checker`
+- `composer-unused`
+- `envsubst`
+- `infection`
+- `local-php-security-checker`
+- `paratest`
+- `phpat`
+- `phpcpd`
+- `phpinsights`
+- `phplint`
+- `phploc`
+- `phpmnd`
+- `phpstan` + `ekino/phpstan-banned-code` + `nunomaduro/larastan`
+- `phpunit`
+- `psalm` + `psalm/plugin-laravel`
+- `psysh` -- a much improved PHP interactive shell
+- `unzip`
+- `nickjj/wait-until`
 
 ### FS images `neurony/php-$PHPVS:fs-$SEMVER`
-ex.: `neurony/php-8.2:fs` or `neurony/php-8.2:fs-23.1` or `neurony/php-8.2:fs-23.11-amd64`
+ex.: `neurony/php-8.2:fs` or `neurony/php-8.2:fs-23.11` or `neurony/php-8.2:fs-23.11-amd64`
 
 Extends the QA image with the following tools:
-  - `nodejs`
-  - `npm`
-  - `npx`
-  - `yarn`
 
+- `nodejs`
+- `npm`
+- `npx`
+- `yarn`
+
+### Dumper images `neurony/php-$PHPVS:dumper-$SEMVER`
+ex.: `neurony/php-8.2:dumper` or `neurony/php-8.2:dumper-23.11` or `neurony/php-8.2:dumper-23.11-amd64`
+
+An image with the var-dump server enabled (but NGINX & PHP-FPM disabled).
+
+It's meant to be used in conjunction with `VAR_DUMPER_FORMAT=tcp://<name-of-your-container>` to allow all of your PHP
+driven containers to use `dump()` and `dd()` and reach the same dump server.
+
+### Cloud-CLI images `neurony/php-$PHPVS:cloud-cli-$SEMVER`
+ex.: `neurony/php-8.2:cloud-cli` or `neurony/php-8.2:cloud-cli-23.11` or `neurony/php-8.2:cloud-cli-23.11-amd64`
+
+An image to use in pipelines where CLI tools are useful to prepare deployments, prepare configuration, build images, etc.:
+
+- `az-cli`
+- `docker`
+- `docker-compose`
+- `kubectl`
+- `mysql`
+- `mysqldump`
 
 ### `add-config` & `add-debug` scripts
 
 We previously offered a dev image that contained tools for developers to debug their local environments.  This is no longer an image, it's a script that can be run on any of the images when you need those tools.
 
 Tools installed by `add-config` script:
+
 - `7zip`
 - `envsubst` -- already present in base image
 - `jq` -- see https://jqlang.github.io/jq/
-- `q` -- see https://harelba.github.io/q/
+- `q` -- see https://harelba.github.io/q/ (only on AMD64)
 - `tar`
-- `unzip`
 - `yq` -- see https://mikefarah.gitbook.io/yq/
+- `unzip` -- already required by QA image for composer
 - `zip`
 
 Tools installed by `add-debug` script:
+
   - `dig`
   - `less`
   - `libmemcached-tools`
@@ -189,7 +218,7 @@ Clone this repo, setup your preferred environment variables (there's an .env.sam
   docker compose build
 
   # or building a specific version of PHP, with a specific version of NodeJS, and a specific timestamp
-  PHPVS=8.2 NODEVS=18 TS=`date +%Y%m` docker compose build
+  PHPVS=8.2 NODEVS=20 TS=`date +%Y%m` docker compose build
   
   # or use the ./build script to build all images
   ./build

@@ -1,7 +1,8 @@
-#!/bin/bash
+#!/bin/bash -ex
 
 set -o allexport;
-source .env;
+[[ -f .env ]] && source .env;
+[[ ! -z "$CI" ]] && sed -i '/platform: linux/d' docker-compose.yml
 
 ROLES=(`yq e '.services[].build.target' docker-compose.yml`);
 TS=${4:-`date +%y.%m`};
@@ -28,7 +29,7 @@ TXT
 
 function __build() {
   echo -n "$ORG/php-$PHPVS:*-$TS-$X_ARCH" >> build.log;
-  docker compose build;
+  docker compose -f docker-compose.yml build;
   echo -e " \xE2\x9C\x94" >> build.log;
 }
 
@@ -61,4 +62,3 @@ for PHPVS in "${PHPVERSIONS[@]}"; do for ROLE in "${ROLES[@]}"; do
       __alias
     done
 done done
-
