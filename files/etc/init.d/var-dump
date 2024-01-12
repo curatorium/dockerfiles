@@ -17,8 +17,14 @@ function __status() {
 function __start() {
   echo -n "var-dump starting...         ";
 
-  CMD="/usr/local/bin/var-dump-server";
-  ARGS="";
+  CMD="$(type -p var-dump-server)"
+  [[ -f "/app/vendor/bin/var-dump-server" ]] && CMD="/app/vendor/bin/var-dump-server";
+  ARGS="--host=0.0.0.0:9912";
+
+  if [[ -z "$CMD" ]]; then
+    echo -e "\rvar-dump is not installed.   ";
+    return;
+  fi
 
   if start-stop-daemon --user www-data --chdir /app --pidfile /run/php/var-dump.pid --make-pidfile --start --background --no-close --exec $CMD -- $ARGS > /proc/1/fd/1; then
     echo -e "\rvar-dump started.            ";
@@ -45,18 +51,10 @@ function __stop() {
 # Service options
 #
 case "$1" in
-  status)
-    __status;
-    ;;
-  start)
-    __start;
-    ;;
-  restart)
-    __restart;
-    ;;
-  stop)
-    __stop;
-    ;;
+  status)  __status  ;;
+  start)   __start   ;;
+  restart) __restart ;;
+  stop)    __stop    ;;
   *)
     echo "Usage: /etc/init.d/var-dump {status|start|restart|stop}"
     exit 1

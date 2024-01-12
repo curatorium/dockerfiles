@@ -1,0 +1,26 @@
+#!/bin/bash -ex
+
+[[ -z "$(ls /var/lib/apt/lists)" ]] && apt update;
+
+#
+# Install archive & compression tools
+apt install -y --no-install-recommends 7zip tar unzip zip
+
+#
+# Install JQ for JSON manipulation @see https://jqlang.github.io/jq/
+apt install -y --no-install-recommends jq;
+
+#
+# Install Q for CSV querying @see https://harelba.github.io/q/
+if [[ "$X_ARCH" == "amd64" ]]; then
+  curl -1fsSL -o /tmp/q.deb https://github.com/harelba/q/releases/download/v3.1.6/q-text-as-data-3.1.6-1.x86_64.deb
+  dpkg -i /tmp/q.deb;
+fi
+
+#
+# Install YQ for YAML manipulation @see https://mikefarah.gitbook.io/yq/
+curl -1fsSL -o /usr/local/bin/yq https://github.com/mikefarah/yq/releases/download/v4.35.2/yq_linux_${X_ARCH};
+
+#
+# Mark all new binaries as executable
+chmod +x /usr/local/bin/*;

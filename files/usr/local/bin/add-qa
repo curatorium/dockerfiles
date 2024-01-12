@@ -1,0 +1,28 @@
+#!/bin/bash -ex
+
+#
+# Additional executable tools
+curl -1fsSL -o /usr/local/bin/wait-until https://raw.githubusercontent.com/nickjj/wait-until/v0.2.0/wait-until;
+curl -1fsSL -o /usr/local/bin/local-php-security-checker https://github.com/fabpot/local-php-security-checker/releases/download/v2.0.6/local-php-security-checker_2.0.6_linux_$X_ARCH;
+chmod +x /usr/local/bin/*;
+
+apt update;
+
+#
+# Install PHP & PHP Modules (& their dependencies)
+PACKAGES=$(cat <<LIST
+  unzip
+
+  php$PHPVS-pcov
+  php$PHPVS-phpdbg
+  php$PHPVS-xdebug
+LIST
+);
+apt install -y --no-install-recommends $PACKAGES;
+
+# Disable pcov & xdebug since they slow things down
+phpdismod pcov xdebug;
+
+#
+# Install all of the global Composer packages.
+find /opt -mindepth 1 -maxdepth 1 -type d -exec sh -c "cd {} && composer install" \;

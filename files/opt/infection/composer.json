@@ -1,0 +1,9 @@
+{
+    "config": {
+        "bin-dir": "/usr/local/bin",
+        "allow-plugins": true
+    },
+    "require": {
+        "infection/infection": "*"
+    }
+}

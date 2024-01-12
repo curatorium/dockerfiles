@@ -1,0 +1,8 @@
+#!/bin/bash -ex
+
+# AZ-CLI
+curl -sLS https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /etc/apt/trusted.gpg.d/microsoft.gpg;
+source /etc/os-release;
+echo "deb https://packages.microsoft.com/repos/azure-cli/ $VERSION_CODENAME main" > /etc/apt/sources.list.d/azure-cli.list;
+apt update;
+apt install azure-cli;

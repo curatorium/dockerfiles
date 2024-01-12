@@ -1,0 +1,11 @@
+{
+    "config": {
+        "bin-dir": "/usr/local/bin",
+        "allow-plugins": true
+    },
+    "require": {
+        "phpstan/phpstan": "*",
+        "ekino/phpstan-banned-code": "*",
+        "nunomaduro/larastan": "*"
+    }
+}

@@ -1,0 +1,10 @@
+#!/bin/bash
+
+#
+# Limit what environment variables envsubst will replace.
+# @param $prefix of the environment variables intended to be replaced.
+
+prefix="$1"; shift;
+envs=$(awk "END { for (name in ENVIRON) { print ( name ~ /${prefix}/ ) ? name : \"\" } }" < /dev/null);
+envs=$(printf '${%s} ' $envs);
+cat - | envsubst "$envs";

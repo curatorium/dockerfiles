@@ -1,0 +1,14 @@
+#
+# Map of how the images are aliased
+
+$ORG/php-$PHPVS:$ROLE-$TS:
+  - '$ORG/php-$PHPVS:$ROLE-$TS'
+  - '$ORG/php-$PHPVS:$ROLE-latest'
+  - '$ORG/php-$PHPVS:$ROLE'
+
+$ORG/php-$PHPVS:base-$TS:
+  - '$ORG/php-$PHPVS:$ROLE-$TS'
+  - '$ORG/php-$PHPVS:$ROLE-latest'
+  - '$ORG/php-$PHPVS:$ROLE'
+  - '$ORG/php-$PHPVS:$TS'
+  - '$ORG/php-$PHPVS:latest'

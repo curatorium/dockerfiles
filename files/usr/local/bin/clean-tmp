@@ -1,0 +1,14 @@
+#!/bin/bash -ex
+
+apt autoremove -y --purge;
+
+rm -fr /tmp/*                     \
+       /var/cache/apt/archives    \
+       /var/cache/npm             \
+       /var/lib/apt/lists         \
+       /var/tmp/*                 \
+       /usr/local/share/.cache/   \
+       /root/.{composer,npm,yarm} \
+       /root/.cache               \
+       /root/.local               \
+;

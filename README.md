@@ -8,142 +8,197 @@ This repository contains the Dockerfiles used to build the PHP images found at h
 They aim to:
 - be compatible with [Symfony](http://symfony.com/) & [Laravel](https://laravel.com/) basic requirements
 - support commonly used extensions (`gd`, `mysql`, `redis`, etc.)
-- be used in ci/cd pipelines to run tests and quality gates
+- be useful in ci/cd pipelines to run tests and quality gates
 - include useful PHP tools (`composer`, `phpunit`, `phpstan`, etc.)
 
 We rely on the PHP package repository provided by [ondrej/php](https://launchpad.net/~ondrej/+archive/ubuntu/php) PPA.
 
 ## Image naming convention
 
-#### Long format:
+Image naming & tagging format:
+  ```
+   (8.0 ... 8.2)      YY.MM
+         ▼              ▼
+  php-<PHPVS>:<role>-<semver>-<arch>
+                ▲               ▲
+           base|qa|fs      amd64|arm64
+        dumper|cloud-cli
+  ```
 
-```
- (7.0 ... 8.2)       YY.MM
-       ▼               ▼
-php-<PHPVS>:<role>-<semver>-<arch>
-               ▲               ▲
-       cli|fpm|qa|fs|dev  amd64|arm64
-```
+The `<semver>` value can be `latest` or an incremental version number (expressed as `YY.MM`).
+The `<arch>` can be omitted because the images are multi-arch.
 
-#### Short format:
+There are several multi-arch aliases for `php-$PHPVS:$ROLE-$SEMVER-*`
+- `php-$PHPVS:$ROLE-$SEMVER` -- the arch is selected based on your system
+- `php-$PHPVS:$ROLE` -- the `<semver>` is assumed to be `latest`
 
-```
-php-<PHPVS>:<role> # with semver=latest & arch=amd64
-```
-
+For the base image there are 2 more shortcuts:
+- `php-$PHPVS:$SEMVER` -- equivalent to `php-$PHPVS:base-$SEMVER`
+- `php-$PHPVS:latest` -- equivalent to `php-$PHPVS:base`
 
 ## Usage
+As a server:
+  ```bash
+  docker run -v "$PWD:/app" neurony/php-8.2:latest # will start nginx + php-fpm (+ crond + var-dump; if enabled)
+  ```
+  or
+  ```yaml
+  # docker-compose.yml
+  services:
+    backend:
+      image: neurony/php-8.2:latest
+      ports: 
+        - 80:80     # served by NGINX by default
+  ```
 
-- The CLI image is meant to be used as a build base for cronjobs and consumers (via orchestration in `docker-compose.yml`).
-- The FPM image is meant to be used as a build base for NGINX+FCGI setups (via orchestrations in `docker-compose.yml`).
-- The QA image is meant to be used in a CI/CD pipeline leveraging its PHP tools (to run static code analysis, test suites, etc.).
-- The DEV image is meant for local development to help reproduce issues found in pipelines and offer the full PHP tools suite to help manually rerun checks locally.
+As a command runner:
+  ```bash
+  docker run -v "$PWD:/app" neurony/php-8.2:latest php /app/command.php # will execute your command & exit
+  ```
 
-----------------------------------------------------------------------
+As a pipeline runner:
+  ```yaml
+  # bitbucket-pipelines.yml
+  - step:
+      image: neurony/php-8.2:qa
+      script:
+        - phpstan
+  ```
 
-### Images
-
-Repositories have the format: `neurony/php-$PHPVS`, ex.: [neurony/php-8.1](https://hub.docker.com/r/neurony/php-8.1)
-
-#### CLI Images
-- Image tags: `neurony/php-$PHPVS:cli-$TIMESTAMP`, ex.: `neurony/php-8.1:cli-latest`
-- Entrypoint: `php -a` -- the PHP built-in interactive shell
-- PHP Extensions:
-  - `php-acpu`
-  - `php-bcmath`
-  - `php-curl`
-  - `php-gd`
-  - `php-http` -- for <=8.0
-  - `php-imagick`
-  - `php-intl`
-  - `php-mbstring`
-  - `php-memcached`
-  - `php-mongodb`
-  - `php-mysql`
-  - `php-opcache`
-  - `php-pgsql`
-  - `php-propro` -- for <=8.0
-  - `php-raphf` -- for <=8.0
-  - `php-readline`
-  - `php-redis`
-  - `php-sqlite`
-  - `php-xml`
-  - `php-zip`
-- Tools:
-  - `composer`
-  - `imagemagick`
-  - `gifsicle`
-  - `jpegoptim`
-  - `optipng`
-  - `pngquant`
+## Repositories `neurony/php-$PHPVS`
+ex.: [neurony/php-8.2](https://hub.docker.com/r/neurony/php-8.2)
 
 
-#### FPM images
-- Image tags: `neurony/php-$PHPVS:fpm-$TIMESTAMP`, ex.: `neurony/php-8.1:fpm-latest`
-- Extends the CLI image
-- Entrypoint: `php-fpm` -- the PHP FCGI server meant to be used in conjunction with a webserver (exposes port `9000`)
+### Base Image `neurony/php-$PHPVS:base-$SEMVER`
+ex.: `neurony/php-8.2:base` or `neurony/php-8.2:base-23.11` or `neurony/php-8.2:base-23.11-amd64`
 
-#### QA images
+PHP Extensions:
 
-For images <= 7.4 some packages listed below cannot be installed.
+- `php-amqp`
+- `php-bcmath`
+- `php-curl`
+- `php-gd`
+- `php-grpc`
+- `php-http`
+- `php-igbinary`
+- `php-imagick`
+- `php-intl`
+- `php-mbstring`
+- `php-memcached`
+- `php-mongodb`
+- `php-msgpack`
+- `php-mysql`
+- `php-newrelic`
+- `php-odbc`
+- `php-pgsql`
+- `php-protobuf`
+- `php-raphf`
+- `php-redis`
+- `php-soap`
+- `php-sqlite3`
+- `php-ssh2`
+- `php-stomp`
+- `php-timezonedb`
+- `php-xml`
+- `php-xsl`
+- `php-yaml`
+- `php-zip`
+- `php-zmq`
 
-- Image tags: `neurony/php-$PHPVS:qa-$TIMESTAMP`, ex.: `neurony/php-8.1:qa-latest`
-- Extends the FPM image
-- Entrypoint: Starts `php-fpm` as a service in the background and `php -a` in the foreground
-- PHP Extensions:
-  - `php-pcov` -- enabled by default
-- Tools:
-  - `codeception`
-  - `composer-require-checker`
-  - `composer-unused`
-  - `envsubst`
-  - `infection`
-  - `local-php-security-checker`
-  - `paratest`
-  - `phpat`
-  - `phpcpd`
-  - `phpinsights`
-  - `phplint`
-  - `phploc`
-  - `phpmnd`
-  - `phpstan` + `ekino/phpstan-banned-code` + `nunomaduro/larastan`
-  - `phpunit`
-  - `psalm` + `psalm/plugin-laravel`
-  - `nickjj/wait-until`
+Tools:
 
-#### FS images
-
-- Image tags: `neurony/php-$PHPVS:fs-$TIMESTAMP`, ex.: `neurony/php-8.1:fs-latest`
-- Extends the QA image
-- Tools:
-  - `nodejs`
-  - `npm`
-  - `npx`
+- `composer`
+- `cron`
+- `nginx`
+- `php-fpm`
 
 
-#### DEV images
+### QA image `neurony/php-$PHPVS:qa-$SEMVER`
+ex.: `neurony/php-8.2:qa` or `neurony/php-8.2:qa-23.11` or `neurony/php-8.2:qa-23.11-amd64`
 
-- Image tags: `neurony/php-$PHPVS:dev-$TIMESTAMP`, ex.: `neurony/php-8.1:dev-latest`
-- Extends the QA image
-- Entrypoint: Start `php-fpm` and `php -S` as services in the background (exposes ports `9000` and `80`), and `psysh` or `php -a` in the foreground 
-- PHP Extensions:
-  - `php-pcov` -- here it's disabled by default
-  - `php-xdebug` -- disabled by default
-  - `php-yaml`
-  - `php-phpdbg`
-- Tools:
-  - `cron`
-  - `curl` 
-  - `git`
-  - `jq`
+Extends the main image with the following PHP Extensions:
+
+- `php-pcov` -- disabled by default
+- `php-phpdbg`
+- `php-xdebug` -- disabled by default
+
+...and tools:
+
+- `codeception`
+- `composer-require-checker`
+- `composer-unused`
+- `envsubst`
+- `infection`
+- `local-php-security-checker`
+- `paratest`
+- `phpat`
+- `phpcpd`
+- `phpinsights`
+- `phplint`
+- `phploc`
+- `phpmnd`
+- `phpstan` + `ekino/phpstan-banned-code` + `nunomaduro/larastan`
+- `phpunit`
+- `psalm` + `psalm/plugin-laravel`
+- `psysh` -- a much improved PHP interactive shell
+- `unzip`
+- `nickjj/wait-until`
+
+### FS images `neurony/php-$PHPVS:fs-$SEMVER`
+ex.: `neurony/php-8.2:fs` or `neurony/php-8.2:fs-23.11` or `neurony/php-8.2:fs-23.11-amd64`
+
+Extends the QA image with the following tools:
+
+- `nodejs`
+- `npm`
+- `npx`
+- `yarn`
+
+### Dumper images `neurony/php-$PHPVS:dumper-$SEMVER`
+ex.: `neurony/php-8.2:dumper` or `neurony/php-8.2:dumper-23.11` or `neurony/php-8.2:dumper-23.11-amd64`
+
+An image with the var-dump server enabled (but NGINX & PHP-FPM disabled).
+
+It's meant to be used in conjunction with `VAR_DUMPER_FORMAT=tcp://<name-of-your-container>` to allow all of your PHP
+driven containers to use `dump()` and `dd()` and reach the same dump server.
+
+### Cloud-CLI images `neurony/php-$PHPVS:cloud-cli-$SEMVER`
+ex.: `neurony/php-8.2:cloud-cli` or `neurony/php-8.2:cloud-cli-23.11` or `neurony/php-8.2:cloud-cli-23.11-amd64`
+
+An image to use in pipelines where CLI tools are useful to prepare deployments, prepare configuration, build images, etc.:
+
+- `az-cli`
+- `docker`
+- `docker-compose`
+- `kubectl`
+- `mysql`
+- `mysqldump`
+
+### `add-config` & `add-debug` scripts
+
+We previously offered a dev image that contained tools for developers to debug their local environments.  This is no longer an image, it's a script that can be run on any of the images when you need those tools.
+
+Tools installed by `add-config` script:
+
+- `7zip`
+- `envsubst` -- already present in base image
+- `jq` -- see https://jqlang.github.io/jq/
+- `q` -- see https://harelba.github.io/q/ (only on AMD64)
+- `tar`
+- `yq` -- see https://mikefarah.gitbook.io/yq/
+- `unzip` -- already required by QA image for composer
+- `zip`
+
+Tools installed by `add-debug` script:
+
+  - `dig`
   - `less`
-  - `man`
+  - `libmemcached-tools`
   - `mysql-client`
   - `nano`
+  - `netcat`
   - `ping`
-  - `psysh` -- a much improved PHP interactive shell
   - `redis-tools`
-  - `ssh`
   - `telnet`
   - `vim`
 
@@ -151,20 +206,25 @@ For images <= 7.4 some packages listed below cannot be installed.
 
 ## Build
 
-Clone this repo, setup your preferred environment variables (there's an .env.example file available) then just run `docker compose build`.
-
+Clone this repo, setup your preferred environment variables (there's an .env.sample file available) then run `docker compose build`.
 
 ```
   git clone git@github.com:Neurony/php-dockerfiles.git;
   cd php-dockerfiles/;
 
-  cp .env.examples .env
+  cp .env.sample .env
   nano .env # specify a platform architecture ($X_ARCH) and PHP version ($PHPVS)
-  
+
   docker compose build
 
   # or building a specific version of PHP, with a specific version of NodeJS, and a specific timestamp
-  PHPVS=8.1 NODEVS=18 TS=`date +%Y%m` docker compose build
+  PHPVS=8.2 NODEVS=20 TS=`date +%Y%m` docker compose build
+  
+  # or use the ./build script to build all images
+  ./build
+
+  # or use the ./build script to build specific images based on your needs
+  ./build nopush "8.0 8.2" "arm64" latest
 ```
 
 ### Contributing

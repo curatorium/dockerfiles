@@ -1,0 +1,8 @@
+{
+  "config": {
+    "bin-dir": "/usr/local/bin"
+  },
+  "require": {
+    "psy/psysh": "@stable"
+  }
+}

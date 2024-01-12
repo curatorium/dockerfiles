@@ -1,0 +1,41 @@
+version: "3.9"
+
+services:
+  base:
+    env_file: .env
+    ports:
+      - 80:80
+      - 443:443
+    volumes: &volumes
+      - ./files/entrypoint.d/:/entrypoint.d/
+      - ./files/etc/init.d/var-dump:/etc/init.d/var-dump
+      - ./files/etc/nginx/templates:/etc/nginx/templates
+      - ./files/usr/local/bin/add-az-cli:/usr/local/bin/add-az-cli
+      - ./files/usr/local/bin/add-config:/usr/local/bin/add-config
+      - ./files/usr/local/bin/add-debug:/usr/local/bin/add-debug
+      - ./files/usr/local/bin/add-docker:/usr/local/bin/add-docker
+      - ./files/usr/local/bin/add-node:/usr/local/bin/add-node
+      - ./files/usr/local/bin/add-nr-cli:/usr/local/bin/add-nr-cli
+      - ./files/usr/local/bin/add-php:/usr/local/bin/add-php
+      - ./files/usr/local/bin/add-qa:/usr/local/bin/add-qa
+      - ./files/usr/local/bin/clean-tmp:/usr/local/bin/clean-tmp
+      - ./files/usr/local/bin/cloud-login:/usr/local/bin/cloud-login
+      - ./files/usr/local/bin/entrypoint:/usr/local/bin/entrypoint
+      - ./files/usr/local/bin/envsubst-only-prefix:/usr/local/bin/envsubst-only-prefix
+      - ./files/app:/app
+
+  dumper:
+    env_file: .env
+    volumes: *volumes
+
+  cloud-cli:
+    env_file: .env
+    volumes: [/var/run/docker.sock:/var/run/docker.sock]
+
+  qa:
+    env_file: .env
+    volumes: *volumes
+
+  fs:
+    env_file: .env
+    volumes: *volumes
