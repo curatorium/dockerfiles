@@ -1,9 +1,6 @@
 .env
 .env.example
 .gitignore
-aliases.yml
-build
-build.log
 CHANGELOG.md
 Dockerfile
 docker-compose.yml

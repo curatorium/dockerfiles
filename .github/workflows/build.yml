@@ -1,0 +1,121 @@
+name: Build PHP images
+
+on:
+  workflow_dispatch: ~
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  version:
+    name: Resolve version
+    permissions: {contents: read}
+    runs-on: ubuntu-24.04
+    outputs:
+      ts: ${{ steps.ts.outputs.ts }}
+    steps:
+      # One timestamp for the whole run: a month rollover mid-run would otherwise
+      # make the merge job look for per-arch tags the build job never created.
+      - id: ts
+        run: echo "ts=$(date +%y.%m)" >>"$GITHUB_OUTPUT"
+
+  build:
+    name: Build ${{ matrix.PHPVS }} ${{ matrix.ROLE }} ${{ matrix.X_ARCH }}
+    needs: version
+    permissions: {contents: read, id-token: write, attestations: write}
+    strategy:
+      fail-fast: false
+      matrix:
+        PHPVS: ['8.0', '8.1', '8.2', '8.3', '8.4', '8.5']
+        ROLE: [base, ci, qa, fs]
+        X_ARCH: [amd64, arm64]
+        include:
+          - {PHPVS: '8.0', NODEVS: 18}
+          - {PHPVS: '8.1', NODEVS: 18}
+          - {PHPVS: '8.2', NODEVS: 20}
+          - {PHPVS: '8.3', NODEVS: 20}
+          - {PHPVS: '8.4', NODEVS: 22}
+          - {PHPVS: '8.5', NODEVS: 25}
+    runs-on: ${{ matrix.X_ARCH == 'arm64' && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
+    env:
+      PHPVS: ${{ matrix.PHPVS }}
+      X_ARCH: ${{ matrix.X_ARCH }}
+      ROLE: ${{ matrix.ROLE }}
+      REPO: curatorium/php-${{ matrix.PHPVS }}
+      TS: ${{ needs.version.outputs.ts }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with: {username: "${{ secrets.DOCKERHUB_USERNAME }}", password: "${{ secrets.DOCKERHUB_TOKEN }}"}
+
+      # Build this role for this arch and push it by digest (no tag yet).
+      - uses: docker/build-push-action@v6
+        id: build
+        with:
+          context: .
+          target: ${{ matrix.ROLE == 'base' && 'php-base' || matrix.ROLE }}
+          platforms: linux/${{ matrix.X_ARCH }}
+          provenance: mode=max
+          sbom: true
+          build-args: |
+            PHPVS=${{ matrix.PHPVS }}
+            NODEVS=${{ matrix.NODEVS }}
+          cache-from: type=gha,scope=${{ matrix.PHPVS }}-${{ matrix.ROLE }}-${{ matrix.X_ARCH }}
+          cache-to: type=gha,scope=${{ matrix.PHPVS }}-${{ matrix.ROLE }}-${{ matrix.X_ARCH }},mode=max
+          outputs: type=image,name=curatorium/php-${{ matrix.PHPVS }},push-by-digest=true,name-canonical=true,push=true
+
+      # Test the pushed digest with this role's own suite (plus service.test for base).
+      - name: Test
+        env: {SHA: "${{ steps.build.outputs.digest }}"}
+        run: |
+          BT="$RUNNER_TEMP/bash-test"
+          curl -1fsSLR https://github.com/curatorium/bash-import/releases/latest/download/bash-test -o "$BT"
+          chmod +x "$BT"
+          IMAGE="$REPO@$SHA" "$BT" "tests/$ROLE.test"
+          if [ "$ROLE" = base ]; then
+            IMAGE="$REPO@$SHA" "$BT" tests/service.test
+          fi
+
+      - uses: actions/attest-build-provenance@v2
+        with: {subject-name: "docker.io/${{ env.REPO }}", subject-digest: "${{ steps.build.outputs.digest }}", push-to-registry: true}
+
+      # Tag the tested digest as the per-arch tag the merge job will join.
+      - name: Push per-arch tag
+        env: {SHA: "${{ steps.build.outputs.digest }}"}
+        run: |
+          docker buildx imagetools create -t "$REPO:$ROLE-$TS-$X_ARCH" "$REPO@$SHA"
+
+  merge:
+    name: Merge ${{ matrix.PHPVS }} ${{ matrix.ROLE }}
+    needs: [version, build]
+    permissions: {contents: read, id-token: write, attestations: write}
+    strategy:
+      fail-fast: false
+      matrix:
+        PHPVS: ['8.0', '8.1', '8.2', '8.3', '8.4', '8.5']
+        ROLE: [base, ci, qa, fs]
+    runs-on: ubuntu-24.04
+    env:
+      ROLE: ${{ matrix.ROLE }}
+      REPO: curatorium/php-${{ matrix.PHPVS }}
+      TS: ${{ needs.version.outputs.ts }}
+    steps:
+      - uses: docker/login-action@v3
+        with: {username: "${{ secrets.DOCKERHUB_USERNAME }}", password: "${{ secrets.DOCKERHUB_TOKEN }}"}
+
+      # Join the per-arch tags into the multi-arch :role-$TS and rolling :role.
+      # imagetools (not docker manifest) so the per-arch attestations survive.
+      - name: Join per-arch tags
+        id: join
+        run: |
+          docker buildx imagetools create -t "$REPO:$ROLE-$TS" -t "$REPO:$ROLE" \
+            "$REPO:$ROLE-$TS-amd64" "$REPO:$ROLE-$TS-arm64"
+          DIGEST=$(docker buildx imagetools inspect "$REPO:$ROLE-$TS" --format '{{.Manifest.Digest}}')
+          echo "digest=$DIGEST" >>"$GITHUB_OUTPUT"
+
+      # The per-arch attestations only cover their own manifest; the index that
+      # consumers actually pull needs one of its own.
+      - uses: actions/attest-build-provenance@v2
+        with: {subject-name: "docker.io/${{ env.REPO }}", subject-digest: "${{ steps.join.outputs.digest }}", push-to-registry: true}
