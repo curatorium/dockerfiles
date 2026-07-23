@@ -27,5 +27,9 @@ curl -1fsSL -o /usr/local/bin/local-php-security-checker https://github.com/fabp
 curl -1fsSL -o /usr/local/bin/snyk https://downloads.snyk.io/cli/stable/snyk-linux$([[ "$(dpkg --print-architecture)" == "arm64" ]] && echo "-arm64");
 
 #
+# Install gitleaks (secret scanner)
+curl -1fsSL https://github.com/gitleaks/gitleaks/releases/download/v8.21.2/gitleaks_8.21.2_linux_$([[ "$(dpkg --print-architecture)" == "arm64" ]] && echo "arm64" || echo "x64").tar.gz | tar -xz -C /usr/local/bin gitleaks;
+
+#
 # Install all of the global Composer packages.
 find /opt -mindepth 2 -maxdepth 2 -type f -name composer.json -exec sh -c 'cd $(dirname {}) && composer install' \;
