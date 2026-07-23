@@ -1,7 +1,11 @@
 name: Build PHP images
 
 on:
-  workflow_dispatch: ~
+  workflow_dispatch:
+    inputs:
+      phpvs:
+        description: Space-separated PHP versions to build
+        default: 8.0 8.1 8.2 8.3 8.4 8.5
 
 concurrency:
   group: build-${{ github.ref }}
@@ -14,11 +18,24 @@ jobs:
     runs-on: ubuntu-24.04
     outputs:
       ts: ${{ steps.ts.outputs.ts }}
+      phpvs: ${{ steps.phpvs.outputs.phpvs }}
+      nodevs: ${{ steps.phpvs.outputs.nodevs }}
     steps:
       # One timestamp for the whole run: a month rollover mid-run would otherwise
       # make the merge job look for per-arch tags the build job never created.
       - id: ts
         run: echo "ts=$(date +%y.%m)" >>"$GITHUB_OUTPUT"
+
+      # Matrices take JSON arrays, not space-separated strings. The NODEVS include
+      # list is filtered alongside, or a dropped version spawns a ROLE-less job.
+      - id: phpvs
+        env: {IN: "${{ inputs.phpvs }}", NODEVS: '{"8.0":18,"8.1":18,"8.2":20,"8.3":20,"8.4":22,"8.5":25}'}
+        run: |
+          LIST=$(jq -cR 'split(" ") | map(select(length > 0))' <<<"$IN")
+          echo "phpvs=$LIST" >>"$GITHUB_OUTPUT"
+          echo "nodevs=$(jq -c --argjson list "$LIST" \
+            'to_entries | map(select(.key as $k | $list | index($k)) | {PHPVS: .key, NODEVS: .value})' \
+            <<<"$NODEVS")" >>"$GITHUB_OUTPUT"
 
   build:
     name: Build ${{ matrix.PHPVS }} ${{ matrix.ROLE }} ${{ matrix.X_ARCH }}
@@ -27,16 +44,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        PHPVS: ['8.0', '8.1', '8.2', '8.3', '8.4', '8.5']
+        PHPVS: ${{ fromJSON(needs.version.outputs.phpvs) }}
         ROLE: [base, ci, qa, fs]
         X_ARCH: [amd64, arm64]
-        include:
-          - {PHPVS: '8.0', NODEVS: 18}
-          - {PHPVS: '8.1', NODEVS: 18}
-          - {PHPVS: '8.2', NODEVS: 20}
-          - {PHPVS: '8.3', NODEVS: 20}
-          - {PHPVS: '8.4', NODEVS: 22}
-          - {PHPVS: '8.5', NODEVS: 25}
+        include: ${{ fromJSON(needs.version.outputs.nodevs) }}
     runs-on: ${{ matrix.X_ARCH == 'arm64' && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
     env:
       PHPVS: ${{ matrix.PHPVS }}
@@ -94,7 +105,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        PHPVS: ['8.0', '8.1', '8.2', '8.3', '8.4', '8.5']
+        PHPVS: ${{ fromJSON(needs.version.outputs.phpvs) }}
         ROLE: [base, ci, qa, fs]
     runs-on: ubuntu-24.04
     env:
