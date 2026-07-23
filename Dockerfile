@@ -1,7 +1,11 @@
 #
 # Base
 FROM nginx:bookworm AS base
-MAINTAINER Mihai Stancu <mihai.stancu@neurony.ro>
+LABEL org.opencontainers.image.authors="Curatorium"
+LABEL org.opencontainers.image.vendor="Curatorium"
+LABEL org.opencontainers.image.licenses="MIT"
+LABEL org.opencontainers.image.source="https://github.com/curatorium/dockerfiles"
+LABEL org.opencontainers.image.url="https://hub.docker.com/u/curatorium"
 
 ENV  DEBIAN_FRONTEND                noninteractive
 ENV  LANG                           en_US.UTF-8
@@ -33,7 +37,11 @@ EXPOSE     443
 #
 # PHP
 FROM base AS php-base
-MAINTAINER Mihai Stancu <mihai.stancu@neurony.ro>
+LABEL org.opencontainers.image.authors="Curatorium"
+LABEL org.opencontainers.image.vendor="Curatorium"
+LABEL org.opencontainers.image.licenses="MIT"
+LABEL org.opencontainers.image.source="https://github.com/curatorium/dockerfiles"
+LABEL org.opencontainers.image.url="https://hub.docker.com/u/curatorium"
 
 ARG  PHPVS
 ENV  PHPVS  $PHPVS
@@ -59,7 +67,11 @@ EXPOSE     9000
 #
 # CI
 FROM php-base AS ci
-MAINTAINER Mihai Stancu <mihai.stancu@neurony.ro>
+LABEL org.opencontainers.image.authors="Curatorium"
+LABEL org.opencontainers.image.vendor="Curatorium"
+LABEL org.opencontainers.image.licenses="MIT"
+LABEL org.opencontainers.image.source="https://github.com/curatorium/dockerfiles"
+LABEL org.opencontainers.image.url="https://hub.docker.com/u/curatorium"
 
 ARG  NODEVS
 ENV  NODEVS  $NODEVS
@@ -77,7 +89,11 @@ RUN  add-az-cli && add-ci && add-docker && add-node && clean-tmp;
 #
 # PHP-QA
 FROM php-base AS qa
-MAINTAINER Mihai Stancu <mihai.stancu@neurony.ro>
+LABEL org.opencontainers.image.authors="Curatorium"
+LABEL org.opencontainers.image.vendor="Curatorium"
+LABEL org.opencontainers.image.licenses="MIT"
+LABEL org.opencontainers.image.source="https://github.com/curatorium/dockerfiles"
+LABEL org.opencontainers.image.url="https://hub.docker.com/u/curatorium"
 
 ARG  PHPVS
 ENV  PHPVS  $PHPVS
@@ -90,7 +106,11 @@ RUN  add-qa && clean-tmp;
 #
 # PHP-FS
 FROM qa AS fs
-MAINTAINER Mihai Stancu <mihai.stancu@neurony.ro>
+LABEL org.opencontainers.image.authors="Curatorium"
+LABEL org.opencontainers.image.vendor="Curatorium"
+LABEL org.opencontainers.image.licenses="MIT"
+LABEL org.opencontainers.image.source="https://github.com/curatorium/dockerfiles"
+LABEL org.opencontainers.image.url="https://hub.docker.com/u/curatorium"
 
 ARG  NODEVS
 ENV  NODEVS  $NODEVS

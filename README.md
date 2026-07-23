@@ -1,9 +1,11 @@
-Neurony PHP Dockerfiles
+Curatorium PHP Dockerfiles
 ======================================================================
 
 ## About
 
-This repository contains the Dockerfiles used to build the PHP images found at https://hub.docker.com/u/neurony.
+This repository contains the Dockerfiles used to build the multi-arch (AMD64 +
+ARM64) PHP images found at https://hub.docker.com/u/curatorium, for PHP 8.0
+through 8.5.
 
 They aim to:
 - be compatible with [Symfony](http://symfony.com/) & [Laravel](https://laravel.com/) basic requirements
@@ -11,221 +13,184 @@ They aim to:
 - be useful in ci/cd pipelines to run tests and quality gates
 - include useful PHP tools (`composer`, `phpunit`, `phpstan`, etc.)
 
-We rely on the PHP package repository provided by [ondrej/php](https://launchpad.net/~ondrej/+archive/ubuntu/php) PPA.
+PHP packages come from the [deb.sury.org](https://deb.sury.org/) repository
+(the Debian counterpart of the `ondrej/php` PPA). The images are built and
+published by GitHub Actions on native per-architecture runners, on demand.
 
 ## Image naming convention
 
 Image naming & tagging format:
   ```
-   (8.0 ... 8.2)      YY.MM
+   (8.0 ... 8.5)      YY.MM
          ▼              ▼
-  php-<PHPVS>:<role>-<semver>-<arch>
-                ▲               ▲
-           base|qa|fs      amd64|arm64
-        dumper|cloud-cli
+  php-<PHPVS>:<role>-<version>
+                ▲
+          base|ci|qa|fs
   ```
 
-The `<semver>` value can be `latest` or an incremental version number (expressed as `YY.MM`).
-The `<arch>` can be omitted because the images are multi-arch.
-
-There are several multi-arch aliases for `php-$PHPVS:$ROLE-$SEMVER-*`
-- `php-$PHPVS:$ROLE-$SEMVER` -- the arch is selected based on your system
-- `php-$PHPVS:$ROLE` -- the `<semver>` is assumed to be `latest`
-
-For the base image there are 2 more shortcuts:
-- `php-$PHPVS:$SEMVER` -- equivalent to `php-$PHPVS:base-$SEMVER`
-- `php-$PHPVS:latest` -- equivalent to `php-$PHPVS:base`
+- Roles: `base`, `ci`, `qa`, `fs`
+- Version: a `YY.MM` timestamp or `latest`
+- Per-arch tags carry an `-amd64` / `-arm64` suffix; the bare tag is a manifest combining both
 
 ## Usage
 As a server:
   ```bash
-  docker run -v "$PWD:/app" neurony/php-8.2:latest # will start nginx + php-fpm (+ crond + var-dump; if enabled)
+  docker run -v "$PWD:/app" curatorium/php-8.5:base # will start nginx + php-fpm (+ crond + var-dump; if enabled)
   ```
   or
   ```yaml
   # docker-compose.yml
   services:
     backend:
-      image: neurony/php-8.2:latest
-      ports: 
+      image: curatorium/php-8.5:base
+      ports:
         - 80:80     # served by NGINX by default
   ```
 
 As a command runner:
   ```bash
-  docker run -v "$PWD:/app" neurony/php-8.2:latest php /app/command.php # will execute your command & exit
+  docker run -v "$PWD:/app" curatorium/php-8.5:base php /app/command.php # will execute your command & exit
   ```
 
 As a pipeline runner:
   ```yaml
-  # bitbucket-pipelines.yml
-  - step:
-      image: neurony/php-8.2:qa
-      script:
-        - phpstan
+  # .github/workflows/ci.yml
+  jobs:
+    qa:
+      runs-on: ubuntu-latest
+      container: curatorium/php-8.5:qa
+      steps:
+        - uses: actions/checkout@v4
+        - run: phpstan
   ```
 
-## Repositories `neurony/php-$PHPVS`
-ex.: [neurony/php-8.2](https://hub.docker.com/r/neurony/php-8.2)
+## Repositories `curatorium/php-$PHPVS`
+ex.: [curatorium/php-8.5](https://hub.docker.com/r/curatorium/php-8.5)
 
 
-### Base Image `neurony/php-$PHPVS:base-$SEMVER`
-ex.: `neurony/php-8.2:base` or `neurony/php-8.2:base-23.11` or `neurony/php-8.2:base-23.11-amd64`
+### Base image `curatorium/php-$PHPVS:base-$VERSION`
+ex.: `curatorium/php-8.5:base` or `curatorium/php-8.5:base-26.06` or `curatorium/php-8.5:base-26.06-amd64`
 
-PHP Extensions:
+Built on `nginx:bookworm`. PHP extensions:
 
-- `php-amqp`
-- `php-bcmath`
-- `php-curl`
-- `php-gd`
-- `php-grpc`
-- `php-http`
-- `php-igbinary`
-- `php-imagick`
-- `php-intl`
-- `php-mbstring`
-- `php-memcached`
-- `php-mongodb`
-- `php-msgpack`
-- `php-mysql`
-- `php-newrelic`
-- `php-odbc`
-- `php-pgsql`
-- `php-protobuf`
-- `php-raphf`
-- `php-redis`
-- `php-soap`
-- `php-sqlite3`
-- `php-ssh2`
-- `php-stomp`
-- `php-timezonedb`
-- `php-xml`
-- `php-xsl`
-- `php-yaml`
-- `php-zip`
-- `php-zmq`
+- `amqp`, `apcu`, `bcmath`, `curl`, `gd`, `grpc`, `http`, `igbinary`, `imagick`,
+  `intl`, `mbstring`, `memcached`, `mongodb`, `msgpack`, `mysql`, `odbc`,
+  `opcache`, `pgsql`, `protobuf`, `raphf`, `readline`, `redis`, `soap`,
+  `sqlite3`, `ssh2`, `stomp`, `timezonedb`, `xml`, `xsl`, `yaml`, `zip`, `zmq`
 
 Tools:
 
 - `composer`
-- `cron`
 - `nginx`
 - `php-fpm`
+- `cron`
+- `tini` (PID 1 / init)
+- `wait-until`
+- `bash-import`, `bash-test`, `steward`
+- image optimisers: `ghostscript`, `imagemagick`, `jpegoptim`, `optipng`, `pngquant`, `gifsicle`
+- `jq`, `nano`, `unzip`
 
 
-### QA image `neurony/php-$PHPVS:qa-$SEMVER`
-ex.: `neurony/php-8.2:qa` or `neurony/php-8.2:qa-23.11` or `neurony/php-8.2:qa-23.11-amd64`
+### CI image `curatorium/php-$PHPVS:ci-$VERSION`
+ex.: `curatorium/php-8.5:ci` or `curatorium/php-8.5:ci-26.06` or `curatorium/php-8.5:ci-26.06-amd64`
 
-Extends the main image with the following PHP Extensions:
+Extends the base image with CLI tooling for pipelines — preparing deployments,
+rendering configuration, building images:
 
-- `php-pcov` -- disabled by default
-- `php-phpdbg`
-- `php-xdebug` -- disabled by default
+- `az` (Azure CLI)
+- `docker` (CLI + `compose` plugin + `buildx`)
+- `kubectl`, `kubelogin`, `krew`
+- `node`, `yarn`
+- `ejson`, `skeema`, `yq`, `q`, `pup`, `gron`, `httpie`
+- `newrelic-cli`
+- `git`, `openssh-client`
+- `mariadb-client`, `redis-tools`, `libmemcached-tools`
 
-...and tools:
+
+### QA image `curatorium/php-$PHPVS:qa-$VERSION`
+ex.: `curatorium/php-8.5:qa` or `curatorium/php-8.5:qa-26.06` or `curatorium/php-8.5:qa-26.06-amd64`
+
+Extends the base image with PHP extensions:
+
+- `pcov` -- disabled by default
+- `xdebug` -- disabled by default
+- `phpdbg`
+
+Security scanners:
+
+- `gitleaks` -- secret scanner
+- `snyk`
+- `local-php-security-checker`
+
+...and PHP tools (each in its own `/opt/<tool>/`):
 
 - `codeception`
 - `composer-require-checker`
 - `composer-unused`
-- `envsubst`
+- `easy-config`
 - `infection`
-- `local-php-security-checker`
-- `paratest`
-- `phpat`
-- `phpcpd`
+- `php-cs-fixer`
+- `phpdcd`
 - `phpinsights`
 - `phplint`
-- `phploc`
 - `phpmnd`
-- `phpstan` + `ekino/phpstan-banned-code` + `nunomaduro/larastan`
+- `phpstan`
 - `phpunit`
-- `psalm` + `psalm/plugin-laravel`
+- `psalm`
 - `psysh` -- a much improved PHP interactive shell
-- `unzip`
-- `nickjj/wait-until`
+- `var-dumper`
 
-### FS images `neurony/php-$PHPVS:fs-$SEMVER`
-ex.: `neurony/php-8.2:fs` or `neurony/php-8.2:fs-23.11` or `neurony/php-8.2:fs-23.11-amd64`
 
-Extends the QA image with the following tools:
+### FS image `curatorium/php-$PHPVS:fs-$VERSION`
+ex.: `curatorium/php-8.5:fs` or `curatorium/php-8.5:fs-26.06` or `curatorium/php-8.5:fs-26.06-amd64`
 
-- `nodejs`
-- `npm`
-- `npx`
-- `yarn`
+Extends the QA image with `nodejs`, `npm`, `npx`, `yarn`, and front-end
+framework CLIs:
 
-### Dumper images `neurony/php-$PHPVS:dumper-$SEMVER`
-ex.: `neurony/php-8.2:dumper` or `neurony/php-8.2:dumper-23.11` or `neurony/php-8.2:dumper-23.11-amd64`
-
-An image with the var-dump server enabled (but NGINX & PHP-FPM disabled).
-
-It's meant to be used in conjunction with `VAR_DUMPER_FORMAT=tcp://<name-of-your-container>` to allow all of your PHP
-driven containers to use `dump()` and `dd()` and reach the same dump server.
-
-### Cloud-CLI images `neurony/php-$PHPVS:cloud-cli-$SEMVER`
-ex.: `neurony/php-8.2:cloud-cli` or `neurony/php-8.2:cloud-cli-23.11` or `neurony/php-8.2:cloud-cli-23.11-amd64`
-
-An image to use in pipelines where CLI tools are useful to prepare deployments, prepare configuration, build images, etc.:
-
-- `az-cli`
-- `docker`
-- `docker-compose`
-- `kubectl`
-- `mysql`
-- `mysqldump`
-
-### `add-config` & `add-debug` scripts
-
-We previously offered a dev image that contained tools for developers to debug their local environments.  This is no longer an image, it's a script that can be run on any of the images when you need those tools.
-
-Tools installed by `add-config` script:
-
-- `7zip`
-- `envsubst` -- already present in base image
-- `jq` -- see https://jqlang.github.io/jq/
-- `q` -- see https://harelba.github.io/q/ (only on AMD64)
-- `tar`
-- `yq` -- see https://mikefarah.gitbook.io/yq/
-- `unzip` -- already required by QA image for composer
-- `zip`
-
-Tools installed by `add-debug` script:
-
-  - `dig`
-  - `less`
-  - `libmemcached-tools`
-  - `mysql-client`
-  - `nano`
-  - `netcat`
-  - `ping`
-  - `redis-tools`
-  - `telnet`
-  - `vim`
+- `@angular/cli`
+- `@vue/cli`
+- `react-cli`
+- `@ionic/cli`
+- `@symfony/webpack-encore`
+- `laravel-mix`
+- `grunt-cli`
 
 ----------------------------------------------------------------------
 
 ## Build
 
-Clone this repo, setup your preferred environment variables (there's an .env.sample file available) then run `docker compose build`.
+Clone this repo, set up your preferred environment variables (there's an
+`.env.sample` file available) then run `docker compose build`.
 
 ```
-  git clone git@github.com:Neurony/php-dockerfiles.git;
-  cd php-dockerfiles/;
+  git clone git@github.com:curatorium/dockerfiles.git;
+  cd dockerfiles/;
 
   cp .env.sample .env
-  nano .env # specify a platform architecture ($X_ARCH) and PHP version ($PHPVS)
+  nano .env # specify a PHP version ($PHPVS) and Node version ($NODEVS)
 
   docker compose build
 
-  # or building a specific version of PHP, with a specific version of NodeJS, and a specific timestamp
-  PHPVS=8.2 NODEVS=20 TS=`date +%Y%m` docker compose build
-  
-  # or use the ./build script to build all images
-  ./build
-
-  # or use the ./build script to build specific images based on your needs
-  ./build nopush "8.0 8.2" "arm64" latest
+  # or build a specific version of PHP, with a specific Node version and timestamp
+  PHPVS=8.5 NODEVS=25 TS=`date +%y.%m` docker compose build
 ```
+
+Multi-arch images are produced by the GitHub Actions build, which builds AMD64
+and ARM64 on native runners, pushes each by digest with build provenance and an
+SBOM attestation, and combines them into a manifest per role.
+
+## Security scanning
+
+A GitHub Actions workflow runs [Docker Scout](https://docs.docker.com/scout/)
+against the published images and uploads the results to the repository's
+**Security → Code scanning** tab. Scout analysis is free, and as an MIT-licensed
+open-source project this repository is eligible for the
+[Docker-Sponsored Open Source](https://www.docker.com/community/open-source/application/)
+program, which grants unlimited Scout analysis and removes image pull rate limits
+for everyone pulling these images.
+
+Each `qa` image also carries `gitleaks` for secret scanning and
+`local-php-security-checker` for auditing a project's Composer dependencies.
 
 ### Contributing
 
