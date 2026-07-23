@@ -1,0 +1,191 @@
+#!/bin/bash
+
+### BEGIN INIT service
+# Provides:          service
+# Short-Description: Daemonizes a command you provide.
+# Description:       Takes a command and arguments and executes them as a service so that you can start/restart/stop it inside the container.
+### END INIT service
+
+
+ACTION="${1?Please specify an action to perform: install|enable|status|start|restart|stop|disable|supervise}"; shift;
+SERVICE="${1}";
+PIDFILE=${PIDFILE:-"/run/service-$SERVICE.pid"}
+SLEEP="${SERVICE_MONITOR_SLEEP:-5s}";
+
+declare -A MESSAGES;
+MESSAGES['manage',0]="service '$SERVICE' ${ACTION}ed.            ";
+MESSAGES['manage',1]="service '$SERVICE' already ${ACTION}ed.    ";
+MESSAGES['manage',2]="service '$SERVICE' failed to ${ACTION}.    ";
+MESSAGES['manage',3]="service '$SERVICE' failed to ${ACTION}.    ";
+MESSAGES['manage',9]="service '$SERVICE' is not installed.       ";
+MESSAGES['action',0]="service '$SERVICE' ${ACTION}ed.            ";
+MESSAGES['action',1]="service '$SERVICE' already ${ACTION}ed.    ";
+MESSAGES['action',2]="service '$SERVICE' failed to ${ACTION}.    ";
+MESSAGES['action',3]="service '$SERVICE' failed to ${ACTION}.    ";
+MESSAGES['action',9]="service '$SERVICE' is not installed.       ";
+MESSAGES['status',0]="service '$SERVICE' running.                ";
+MESSAGES['status',1]="service '$SERVICE' stopped.                ";
+MESSAGES['status',3]="service '$SERVICE' stopped.                ";
+MESSAGES['status',4]="service '$SERVICE' error.                  ";
+MESSAGES['status',9]="service '$SERVICE' is not installed.       ";
+MESSAGES['help',0]=$(cat <<EOT
+NAME
+
+    service   Manages /etc/init.d/ service scripts to start|status|stop|stop them.
+              Creates /etc/init.d/ service scripts from a command with arguments.
+              Monitors /etc/init.d/ service scripts to keep them alive.
+
+
+SYNOPSIS
+
+    service install <service-name> <cmd> <args...>
+
+    service {enable|disable|uninstall}  <service-name>
+    service {  e   |   d   |    u    }  <service-name>
+
+    service {start|status|restart|stop} <service-name>
+    service {  s  |  i   |   r   | x  } <service-name>
+
+    service monitor [services...]
+
+
+ARGUMENTS
+
+    service <action> <service-name>
+        <action>        Required. One of enable|disable|uninstall|start|status|restart|stop or e|d|u|s|i|r|x.
+        <service-name>  Required. Name of service to be managed.
+
+    service install <service-name> <cmd> <args...>
+        <cmd>           Required. Command being daemonized.
+        <args...>       Required. Arguments for the command being daemonized.
+
+    service monitor [services...]
+        [services...]   Optional. List of services to monitor. Will monitor all services found in /etc/init.d/services.list
+
+
+EOT
+);
+
+
+function __install() {
+  shift;
+  CMD="${1?Please specify the command to be daemonized.}"; shift;
+
+  CMD=$(which "$CMD");
+  [[ -z "$CMD" ]] && return 9;
+
+  # Serialize args shell-quoted into an array so they reconstruct verbatim when
+  # the init file is sourced: keeps arg boundaries and stops a literal glob
+  # metachar (e.g. a '*' routing key) from expanding against --chdir.
+  printf -v ARGS '%q ' "${@:1}";
+  cat <<EOT > /etc/init.d/$SERVICE;
+#!/bin/bash
+
+CMD="$CMD";
+ARGS=($ARGS);
+
+if [[ "\$0" != "/usr/local/bin/service" ]]; then
+  service "\$1" $SERVICE "\$CMD" "\${ARGS[@]}"
+fi
+EOT
+  chmod +x /etc/init.d/$SERVICE;
+}
+function __enable() {
+  test -f /etc/init.d/$SERVICE || return 9;
+  grep "$SERVICE" /etc/init.d/services.list > /dev/null 2>&1 || echo "$SERVICE" >> /etc/init.d/services.list;
+}
+function __disable() {
+  test -f /etc/init.d/$SERVICE || return 9;
+  sed -i "/$SERVICE/d" /etc/init.d/services.list > /dev/null 2>&1;
+}
+function __uninstall() {
+  test -f /etc/init.d/$SERVICE || return 9;
+  rm -f /etc/init.d/$SERVICE;
+}
+
+function __start() {
+  test -f /etc/init.d/$SERVICE || return 9;
+  [[ "$0" == "/usr/local/bin/service" ]] && source "/etc/init.d/$SERVICE";
+  __enable;
+  start-stop-daemon --start --pidfile "$PIDFILE" --make-pidfile    \
+    --background --no-close --output /proc/1/fd/1                  \
+    --chuid www-data:www-data --chdir /app --startas "$CMD" -- "${ARGS[@]}" \
+    > /dev/null 2>&1;
+}
+function __status() {
+  test -f /etc/init.d/$SERVICE || return 9;
+  start-stop-daemon --pidfile "$PIDFILE" --status > /dev/null 2>&1;
+}
+function __restart() {
+  __stop;
+  __start;
+}
+function __stop() {
+  test -f /etc/init.d/$SERVICE || return 9;
+  start-stop-daemon --pidfile "$PIDFILE" --remove-pidfile --stop > /dev/null 2>&1;
+  local STATUS=$?;
+  __disable;
+  return $STATUS;
+}
+
+function __monitor() {
+  trap __halt INT QUIT TERM EXIT;
+
+  touch /etc/init.d/services.list;
+
+  # Enable services received as params.
+  SERVICES="${@}";
+  for SERVICE in $SERVICES; do
+    service enable $SERVICE;
+  done
+
+  # Keep services alive: Check status & restart stopped service.
+  # Otherwise shutdown services & exit.
+  while true; do
+    SERVICES=$(cat /etc/init.d/services.list);
+    for SERVICE in $SERVICES;
+    do
+                       /etc/init.d/$SERVICE status > /dev/null 2>&1  ||
+      (                /etc/init.d/$SERVICE start  > /dev/null 2>&1) ||
+      (sleep $SLEEP && /etc/init.d/$SERVICE start  > /dev/null 2>&1) ||
+      (sleep $SLEEP && /etc/init.d/$SERVICE start  > /dev/null 2>&1) ||
+      exit;
+    done;
+
+    sleep $SLEEP;
+  done;
+}
+
+function __halt() {
+  SERVICES=$(cat /etc/init.d/services.list);
+  for SERVICE in $SERVICES;
+  do
+    /etc/init.d/$SERVICE stop > /dev/null 2>&1;
+  done;
+
+  exit;
+}
+
+function __help() {
+  return 0;
+}
+
+
+case "$ACTION" in
+    install     ) TYPE='manage'; __install   "$@" ;;
+  e|enable      ) TYPE='manage'; __enable    "$@" ;;
+  d|disable     ) TYPE='manage'; __disable   "$@" ;;
+  u|uninstall   ) TYPE='manage'; __uninstall "$@" ;;
+
+  s|start       ) TYPE='action'; __start     "$@" ;;
+  i|info|status ) TYPE='status'; __status    "$@" ;;
+  r|restart     ) TYPE='action'; __restart   "$@" ;;
+  x|stop        ) TYPE='action'; __stop      "$@" ;;
+
+  m|monitor     ) TYPE='manage'; __monitor   "$@" ;;
+
+    help        ) TYPE='help';   __help      "$@" ;;
+esac
+STATUS=$?;
+echo "${MESSAGES[$TYPE,$STATUS]}";
+exit $STATUS;

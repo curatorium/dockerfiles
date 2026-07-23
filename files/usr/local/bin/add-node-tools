@@ -1,0 +1,10 @@
+#!/bin/bash -ex
+
+# Install nodejs framework CLI utilities
+npm install --global @angular/cli;
+npm install --global grunt-cli
+npm install --global @ionic/cli
+npm install --global laravel-mix;
+npm install --global react-cli;
+npm install --global @symfony/webpack-encore;
+npm install --global @vue/cli;

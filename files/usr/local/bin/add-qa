@@ -1,17 +1,12 @@
 #!/bin/bash -ex
 
-#
-# Additional executable tools
-curl -1fsSL -o /usr/local/bin/wait-until https://raw.githubusercontent.com/nickjj/wait-until/v0.2.0/wait-until;
-curl -1fsSL -o /usr/local/bin/local-php-security-checker https://github.com/fabpot/local-php-security-checker/releases/download/v2.0.6/local-php-security-checker_2.0.6_linux_$X_ARCH;
-chmod +x /usr/local/bin/*;
-
-apt update;
+[[ -z "$(ls /var/lib/apt/lists)" ]] && apt update;
 
 #
 # Install PHP & PHP Modules (& their dependencies)
 PACKAGES=$(cat <<LIST
-  unzip
+  git
+  openssh-client
 
   php$PHPVS-pcov
   php$PHPVS-phpdbg
@@ -24,5 +19,13 @@ apt install -y --no-install-recommends $PACKAGES;
 phpdismod pcov xdebug;
 
 #
+# Install local-php-security-checker
+curl -1fsSL -o /usr/local/bin/local-php-security-checker https://github.com/fabpot/local-php-security-checker/releases/download/v2.0.6/local-php-security-checker_2.0.6_linux_$(dpkg --print-architecture);
+
+#
+# Install Snyk CLI
+curl -1fsSL -o /usr/local/bin/snyk https://downloads.snyk.io/cli/stable/snyk-linux$([[ "$(dpkg --print-architecture)" == "arm64" ]] && echo "-arm64");
+
+#
 # Install all of the global Composer packages.
-find /opt -mindepth 1 -maxdepth 1 -type d -exec sh -c "cd {} && composer install" \;
+find /opt -mindepth 2 -maxdepth 2 -type f -name composer.json -exec sh -c 'cd $(dirname {}) && composer install' \;

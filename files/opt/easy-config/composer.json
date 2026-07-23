@@ -1,0 +1,12 @@
+{
+    "config": {
+        "bin-dir": "/usr/local/bin",
+        "audit": {
+            "ignore": ["twig/twig"]
+        }
+    },
+    "require": {
+        "curatorium/easy-config": "*"
+    },
+    "minimum-stability": "dev"
+}

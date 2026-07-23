@@ -1,0 +1,35 @@
+#!/bin/bash -ex
+
+apt update;
+
+#
+# Install runtime packages
+PACKAGES=$(cat <<LIST
+  cron
+  gnupg
+  jq
+  less
+  locales
+  nano
+  patch
+  sudo
+  tini
+  tzdata
+  unzip
+LIST
+);
+apt install -y --no-install-recommends $PACKAGES;
+
+# Install wait-until @see https://github.com/nickjj/wait-until
+curl -1fsSL -o /usr/local/bin/wait-until https://raw.githubusercontent.com/nickjj/wait-until/v0.3.0/wait-until;
+
+# @see https://github.com/curatorium/bash-import
+curl -1fsSL -o /usr/local/bin/bash-import https://github.com/curatorium/bash-import/releases/latest/download/bash-import;
+
+# @see https://github.com/curatorium/bash-test
+curl -1fsSL -o /usr/local/bin/bash-test https://github.com/curatorium/bash-import/releases/latest/download/bash-test;
+
+# @see https://github.com/curatorium/steward
+curl -1fsSL -o /usr/local/bin/steward https://github.com/curatorium/steward/releases/latest/download/steward;
+
+chmod +x /usr/local/bin/*;

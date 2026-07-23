@@ -1,6 +1,10 @@
 #!/bin/bash -ex
 
+# Mark all new binaries as executable
+chmod +x /usr/local/bin/*;
+
 apt autoremove -y --purge;
+apt clean;
 
 rm -fr /tmp/*                     \
        /var/cache/apt/archives    \

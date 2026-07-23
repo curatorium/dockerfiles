@@ -1,16 +1,6 @@
 #!/bin/bash -ex
 
-apt update;
-
-#
-# Install prerequisites
-PREREQUISITES=$(cat <<LIST
-  cron
-  gnupg
-  tini
-LIST
-);
-apt install -y --no-install-recommends $PREREQUISITES;
+X_ARCH=$(dpkg --print-architecture)
 
 #
 # Add Ondrej Sury's PHP repository @see https://deb.sury.org/
@@ -27,9 +17,7 @@ apt update;
 #
 # Install PHP & PHP Modules (& their dependencies)
 PACKAGES=$(cat <<LIST
-  locales
-  tzdata
-
+  ghostscript
   gifsicle
   imagemagick
   jpegoptim
@@ -37,25 +25,22 @@ PACKAGES=$(cat <<LIST
   pngquant
 
   php$PHPVS-amqp
+  php$PHPVS-apcu
   php$PHPVS-bcmath
   php$PHPVS-cli
   php$PHPVS-common
   php$PHPVS-curl
   php$PHPVS-fpm
   php$PHPVS-gd
-  php$PHPVS-grpc
   php$PHPVS-http
   php$PHPVS-igbinary
   php$PHPVS-imagick
   php$PHPVS-intl
   php$PHPVS-mbstring
-  php$PHPVS-mcrypt
-  php$PHPVS-memcached
   php$PHPVS-mongodb
   php$PHPVS-msgpack
   php$PHPVS-mysql
   php$PHPVS-odbc
-  php$PHPVS-opcache
   php$PHPVS-pgsql
   php$PHPVS-protobuf
   php$PHPVS-raphf
@@ -69,29 +54,36 @@ PACKAGES=$(cat <<LIST
   php$PHPVS-xsl
   php$PHPVS-yaml
   php$PHPVS-zip
-  php$PHPVS-zmq
 LIST
 );
 apt install -y --no-install-recommends $PACKAGES;
+
+# Skippable packages (PHP 8.5 doesn't have them)
+PACKAGES=$(cat <<LIST
+  php$PHPVS-grpc
+  php$PHPVS-memcached
+  php$PHPVS-opcache
+  php$PHPVS-zmq
+LIST
+);
+apt install -y --no-install-recommends $PACKAGES || true;
 
 #
 # Install NewRelic PHP agent (only for AMD64)
 [[ "$X_ARCH" == "amd64" ]] && apt -y install newrelic-php5 && phpdismod newrelic;
 
 #
-# Install Composer
-curl -1fsSL https://getcomposer.org/installer | php -- --2   --install-dir=/usr/local/bin --filename=composer
-chmod +x /usr/local/bin/*
+# Use PEAR & PECL packages
+apt install -y --no-install-recommends make php$PHPVS-dev php-pear;
+pecl channel-update pecl.php.net;
+# Install TimezoneDB
+pecl install timezonedb && phpenmod timezonedb;
+# Remove PEAR & PECL
+apt remove -y make php$PHPVS-dev php-pear;
 
 #
-# Install TimezoneDB via PECL
-PECL_PREREQ="make php$PHPVS-dev php-pear";
-apt install -y --no-install-recommends $PECL_PREREQ;
-pecl channel-update pecl.php.net;
-pecl install timezonedb;
-apt remove -y $PECL_PREREQ;
-echo "extension=timezonedb.so" > "/etc/php/$PHPVS/mods-available/timezonedb.ini";
-phpenmod "timezonedb";
+# Install Composer
+curl -1fsSL https://getcomposer.org/installer | php -- --2   --install-dir=/usr/local/bin --filename=composer;
 
 #
 # Setup NGINX
@@ -100,10 +92,15 @@ sed -i 's/user  nginx;/user www-data;/' /etc/nginx/nginx.conf;
 # Redirect output to stdout & stderr
 ln -sfn /proc/1/fd/1 /var/log/nginx/access.log;
 ln -sfn /proc/1/fd/2 /var/log/nginx/error.log;
-# Move original docker-entrypoint.sh to /usr/local/bin/ and rename it to reflect that it only handles nginx
-sed -i 's/\/docker-entrypoint.d/\/entrypoint-nginx.d/' /docker-entrypoint.sh
-mv /docker-entrypoint.sh /usr/local/bin/nginx-entrypoint;
-mv /docker-entrypoint.d /entrypoint-nginx.d;
+# Move NGINX entrypoint autoconfiguration scripts to /entrypoint.d/
+cd /docker-entrypoint.d/;
+for script in *.{envsh,sh}; do mv "$script" "/entrypoint.d/10-nginx-$script"; done;
+mv /entrypoint.d/10-nginx-15-local-resolvers.envsh /entrypoint.d/10-nginx-15-local-resolvers.sh;
+rm -fr /docker-entrypoint.sh /docker-entrypoint.d;
+
+#
+# Allow ImageMagick to handle PDF files
+sed -i '/<policy domain="coder" rights="none" pattern="PDF" \/>/d' /etc/ImageMagick-6/policy.xml;
 
 #
 # Setup PHP-FPM
@@ -111,7 +108,5 @@ mv /docker-entrypoint.d /entrypoint-nginx.d;
 ln -sfn /etc/init.d/php?.?-fpm /etc/init.d/php-fpm;
 # Redirect output to stdout & stderr
 ln -sfn /proc/1/fd/2 /var/log/php$PHPVS-fpm.log;
-
-#
-# Enable case insensitive tab-completion
-echo 'set completion-ignore-case On;' >> /etc/inputrc;
+# Use a short name for newrelic
+ln -sfn /etc/init.d/newrelic-daemon /etc/init.d/newrelic;

@@ -7,4 +7,3 @@ password=$MYSQL_PASSWORD
 host=$MYSQL_HOST
 user=$MYSQL_USER
 password=$MYSQL_PASSWORD
-column-statistics=0
