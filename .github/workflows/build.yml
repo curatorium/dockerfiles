@@ -43,6 +43,9 @@ jobs:
     permissions: {contents: read, id-token: write, attestations: write}
     strategy:
       fail-fast: false
+      # Docker Hub answers 429 to the manifest HEAD when the whole matrix pushes
+      # at once; 8 concurrent pushes stays under the account's request budget.
+      max-parallel: 8
       matrix:
         PHPVS: ${{ fromJSON(needs.version.outputs.phpvs) }}
         ROLE: [base, ci, qa, fs]
