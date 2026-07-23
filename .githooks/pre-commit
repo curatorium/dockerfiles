@@ -1,0 +1,22 @@
+#!/bin/bash
+# Copyright (c) 2025 Mihai Stancu (https://github.com/curatorium)
+#
+# Unlike the pure-bash siblings these suites run against built images: they pick
+# the host-arch image for the PHPVS/TS in .env, and a missing image just fails
+# the test. The CI matrix covers the other versions and arches.
+set -a; . ./.env; set +a
+export X_ARCH=$(dpkg --print-architecture)
+
+bash-test tests/service.test > tests/service.test.md ||
+	{ echo "ERROR: service tests failed."; exit 1; }
+bash-test tests/base.test > "tests/base.test.$PHPVS.md" ||
+	{ echo "ERROR: base tests failed."; exit 1; }
+bash-test tests/ci.test > "tests/ci.test.$PHPVS.md" ||
+	{ echo "ERROR: ci tests failed."; exit 1; }
+bash-test tests/qa.test > "tests/qa.test.$PHPVS.md" ||
+	{ echo "ERROR: qa tests failed."; exit 1; }
+bash-test tests/fs.test > "tests/fs.test.$PHPVS.md" ||
+	{ echo "ERROR: fs tests failed."; exit 1; }
+
+git diff --quiet tests/service.test.md tests/*.test.$PHPVS.md ||
+	{ echo "WARNING: reports are out of date — stage them."; exit 1; }

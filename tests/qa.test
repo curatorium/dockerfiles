@@ -1,0 +1,39 @@
+# shellcheck shell=bash
+# shellcheck disable=SC2016
+# qa role — the QA/test/security tooling it adds on top of base.
+source "$(dirname "${BASH_SOURCE[0]}")/.deps/lib.sh"
+IMAGE="${IMAGE:-$(img_for qa)}"
+
+# pcov/xdebug are installed-but-disabled by design (not runtime-asserted).
+test:path:phpstan()      { on_path "$IMAGE" phpstan; }
+test:run:phpstan()       { runs    "$IMAGE" phpstan; }
+test:path:phpunit()      { on_path "$IMAGE" phpunit; }
+test:run:phpunit()       { runs    "$IMAGE" phpunit; }
+test:path:php-cs-fixer() { on_path "$IMAGE" php-cs-fixer; }
+test:run:php-cs-fixer()  { runs    "$IMAGE" php-cs-fixer; }
+test:path:infection()    { on_path "$IMAGE" infection; }
+test:run:infection()     { runs    "$IMAGE" infection; }
+test:path:codecept()     { on_path "$IMAGE" codecept; }
+test:run:codecept()      { runs    "$IMAGE" codecept; }
+test:path:phpdbg()       { on_path "$IMAGE" phpdbg; }
+test:run:phpdbg()        { runs    "$IMAGE" phpdbg; }
+test:path:gitleaks()     { on_path "$IMAGE" gitleaks; }
+test:run:gitleaks()      { runs    "$IMAGE" gitleaks; }
+
+output() {
+	cat <<-MD
+		# Image tests — qa — php-$PHPVS / $X_ARCH
+
+		## Binaries
+
+		| Binary       | On PATH | Runs |
+		|--------------|---------|------|
+		| phpstan      | $(t path:phpstan) | $(t run:phpstan) |
+		| phpunit      | $(t path:phpunit) | $(t run:phpunit) |
+		| php-cs-fixer | $(t path:php-cs-fixer) | $(t run:php-cs-fixer) |
+		| infection    | $(t path:infection) | $(t run:infection) |
+		| codecept     | $(t path:codecept) | $(t run:codecept) |
+		| phpdbg       | $(t path:phpdbg) | $(t run:phpdbg) |
+		| gitleaks     | $(t path:gitleaks) | $(t run:gitleaks) |
+	MD
+}

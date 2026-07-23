@@ -1,0 +1,32 @@
+# shellcheck shell=bash
+# shellcheck disable=SC2016
+# fs role — node + the front-end framework CLIs it adds on top of qa.
+source "$(dirname "${BASH_SOURCE[0]}")/.deps/lib.sh"
+IMAGE="${IMAGE:-$(img_for fs)}"
+
+test:path:node()  { on_path "$IMAGE" node; }
+test:run:node()   { runs    "$IMAGE" node; }
+test:path:ng()    { on_path "$IMAGE" ng; }
+test:run:ng()     { runs    "$IMAGE" ng; }
+test:path:vue()   { on_path "$IMAGE" vue; }
+test:run:vue()    { runs    "$IMAGE" vue; }
+test:path:ionic() { on_path "$IMAGE" ionic; }
+test:run:ionic()  { runs    "$IMAGE" ionic; }
+test:path:grunt() { on_path "$IMAGE" grunt; }
+test:run:grunt()  { runs    "$IMAGE" grunt; }
+
+output() {
+	cat <<-MD
+		# Image tests — fs — php-$PHPVS / $X_ARCH
+
+		## Binaries
+
+		| Binary | On PATH | Runs |
+		|--------|---------|------|
+		| node   | $(t path:node) | $(t run:node) |
+		| ng     | $(t path:ng) | $(t run:ng) |
+		| vue    | $(t path:vue) | $(t run:vue) |
+		| ionic  | $(t path:ionic) | $(t run:ionic) |
+		| grunt  | $(t path:grunt) | $(t run:grunt) |
+	MD
+}

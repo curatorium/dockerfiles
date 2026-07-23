@@ -1,0 +1,58 @@
+# shellcheck shell=bash
+# shellcheck disable=SC2016
+# ci role — the CLI tooling it adds on top of base.
+source "$(dirname "${BASH_SOURCE[0]}")/.deps/lib.sh"
+IMAGE="${IMAGE:-$(img_for ci)}"
+
+test:path:az()      { on_path "$IMAGE" az; }
+test:run:az()       { runs    "$IMAGE" az; }
+test:path:docker()  { on_path "$IMAGE" docker; }
+test:run:docker()   { runs    "$IMAGE" docker; }
+test:path:kubectl() { on_path "$IMAGE" kubectl; }
+test:run:kubectl()  { runs    "$IMAGE" kubectl; }
+test:path:node()    { on_path "$IMAGE" node; }
+test:run:node()     { runs    "$IMAGE" node; }
+test:path:npm()     { on_path "$IMAGE" npm; }
+test:run:npm()      { runs    "$IMAGE" npm; }
+test:path:yarn()    { on_path "$IMAGE" yarn; }
+test:run:yarn()     { runs    "$IMAGE" yarn; }
+test:path:git()     { on_path "$IMAGE" git; }
+test:run:git()      { runs    "$IMAGE" git; }
+test:path:mariadb() { on_path "$IMAGE" mariadb; }
+test:run:mariadb()  { runs    "$IMAGE" mariadb; }
+test:path:ez-cfg()  { on_path "$IMAGE" ez-cfg; }
+test:run:ez-cfg()   { runs    "$IMAGE" ez-cfg; }
+test:path:ejson()   { on_path "$IMAGE" ejson; }
+test:run:ejson()    { runs    "$IMAGE" ejson; }
+test:path:skeema()  { on_path "$IMAGE" skeema; }
+test:run:skeema()   { runs    "$IMAGE" skeema; }
+test:path:yq()      { on_path "$IMAGE" yq; }
+test:run:yq()       { runs    "$IMAGE" yq; }
+# q installs amd64-only; on arm64 it's a documented, non-blocking gap — both
+# dimensions short-circuit to a pass with a note.
+test:path:q()       { [ "$X_ARCH" = amd64 ] || { echo "amd64-only (known arm64 gap)"; return 0; }; on_path "$IMAGE" q; }
+test:run:q()        { [ "$X_ARCH" = amd64 ] || { echo "amd64-only (known arm64 gap)"; return 0; }; runs    "$IMAGE" q; }
+
+output() {
+	cat <<-MD
+		# Image tests — ci — php-$PHPVS / $X_ARCH
+
+		## Binaries
+
+		| Binary             | On PATH | Runs |
+		|--------------------|---------|------|
+		| az                 | $(t path:az) | $(t run:az) |
+		| docker             | $(t path:docker) | $(t run:docker) |
+		| kubectl            | $(t path:kubectl) | $(t run:kubectl) |
+		| node               | $(t path:node) | $(t run:node) |
+		| npm                | $(t path:npm) | $(t run:npm) |
+		| yarn               | $(t path:yarn) | $(t run:yarn) |
+		| git                | $(t path:git) | $(t run:git) |
+		| mariadb            | $(t path:mariadb) | $(t run:mariadb) |
+		| ez-cfg             | $(t path:ez-cfg) | $(t run:ez-cfg) |
+		| ejson              | $(t path:ejson) | $(t run:ejson) |
+		| skeema             | $(t path:skeema) | $(t run:skeema) |
+		| yq                 | $(t path:yq) | $(t run:yq) |
+		| q (amd64-only)     | $(t path:q) | $(t run:q) |
+	MD
+}
