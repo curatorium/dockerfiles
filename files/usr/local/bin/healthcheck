@@ -1,0 +1,18 @@
+#!/bin/bash
+
+# Exit codes:
+# 0: success   - the container is healthy and ready for use
+# 1: unhealthy - the container isn't working correctly
+# 2: reserved  - don't use this exit code
+
+# Run composer script for healthcheck if implemented
+if [[ -f /app/composer.json ]] && jq -e .scripts.healthcheck /app/composer.json > /dev/null 2>&1; then
+  composer run-script healthcheck || exit 1;
+fi
+
+# Run npm script for healthcheck if implemented
+if [[ -f /app/package.json ]] && jq -e .scripts.healthcheck /app/package.json > /dev/null 2>&1; then
+  npm run healthcheck || exit 1;
+fi
+
+exit 0;

@@ -35,6 +35,7 @@ alias tree='tree -Csuh'    #  Nice alternative to 'recursive ls' ...
 
 alias h='history'
 alias j='jobs -l'
+alias srv='service'
 alias which='type -a'
 
 # pretty-print PATH:
@@ -83,17 +84,17 @@ alias cc="sf cache:clear";
 alias cache:clear="sf cache:clear";
 alias clear:cache="sf cache:clear";
 alias config="sf debug:config";
-alias dump='php $(find-up -f vendor/bin/var-dump-server)';
+alias dump='php $(find-up -f vendor/bin/var-dump-server || echo /usr/local/bin/var-dump-server)';
 alias env-vars="sf debug:container --env-vars";
 alias env-var="sf debug:container --env-var";
 alias events="sf debug:event-dispatcher";
 alias event="sf debug:event-dispatcher";
-alias event="sf doctrine:fixtures:load"
-alias migrate="sf doctrine:migrations:migrate";
+alias fixtures="sf doctrine:fixtures:load --append"
+[[ -f ./symfony.lock ]] && alias migrate="sf doctrine:migrations:migrate";
 alias migrate:diff="sf doctrine:migrations:diff";
 alias params="sf debug:container --parameters";
 alias param="sf debug:container --parameter";
-alias psysh='php $(find-up -f vendor/bin/psysh) --cwd /app';
+alias psysh='php $(find-up -f vendor/bin/psysh || echo /usr/local/bin/psysh) --cwd /app';
 alias router="sf debug:router";
 alias schema:create="sf doctrine:schema:create";
 alias schema:drop="sf doctrine:schema:drop";
@@ -107,7 +108,7 @@ alias services="sf debug:container";
 #region laravel
 alias artisan="php artisan";
 alias db:seed="artisan db:seed";
-alias migrate="artisan migrate";
+[[ -f ./artisan ]] && alias migrate="artisan migrate";
 alias migrate:fresh="artisan migrate:fresh";
 alias migrate:refresh="artisan migrate:refresh";
 alias queue:work="artisan queue:work";
@@ -115,6 +116,17 @@ alias route:list="artisan route:list";
 alias tinker="artisan tinker";
 #endregion laravel
 
+#
+#region STAN
+alias phpstan='php $(find-up -f vendor/bin/phpstan || echo /usr/local/bin/phpstan)';
+alias stan-sf='phpstan analyse -c $(find -name "*symfony*.neon")'
+alias stan-zf='phpstan analyse -c $(find -name "*zend*.neon")'
+alias stan-lara='phpstan analyse -c $(find -name "*laravel*.neon")'
+alias stan='stan-sf && stan-zf';
+
+alias cs-check='php-cs-fixer check';
+alias cs-fix='php-cs-fixer fix';
+#endregion
 
 #
 #region generic
@@ -140,7 +152,7 @@ function find-up {
     path=${path%/*};
   done
   if [[ ! -e "$path/$search" ]]; then
-    return;
+    return 1;
   fi
 
   # Output the result.
@@ -195,4 +207,18 @@ function makezip {
     zip -r "${1%%/}.zip" "$1" ;
 }
 
+# Detect framework and display relevant aliases.
+function display-aliases() {
+    [[ -f ./artisan      ]] && REGION=laravel;
+    [[ -f ./symfony.lock ]] && REGION=symfony;
+    [[ -z "$REGION" ]] && return;
+
+    echo "";
+    echo "#";
+    echo "# Aliases";
+    echo "";
+    awk '/^#region '$REGION'$/,/^#endregion '$REGION'$/{if($0!~/^#(region|endregion)/)print}' ~/.bash_aliases \
+    | sed 's/.*alias //' | awk -F= '{name=$1; $1=""; printf "%-20s %s\n", name, $0}';
+    echo "";
+}
 #endregion

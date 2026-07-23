@@ -1,31 +1,33 @@
 #!/bin/bash
 
-#
-# Run scripts:
-# - If a custom script is provided in /entrypoint.d/ then it will be executed.
-# - If a custom script exits then execution stops immediately.
-# - If an argument is provided then 50-run-command.sh will run it and exit.
-# - Otherwise the scripts 90-start-servers.sh will start nginx, php-fpm, crond etc..
-# - Will sleep until an INT, QUIT, or STOP signal is given.
-# - Will shutdown all running services before exiting.
-for script in /entrypoint.d/*.sh;
+export NGINX_ENTRYPOINT_QUIET_LOGS=true;
+# Run all executable scripts matching /entrypoint.d/*.{envsh.sh}:
+scripts=$(find "/entrypoint.d/" -mindepth 1 -maxdepth 1 -follow -executable -type f \( -iname \*.envsh -o -iname \*.sh \) -print 2>/dev/null | sort -V);
+for script in $scripts;
 do
-  # scripts are sourced
-  source "$script" "$@";
+  case "$script" in
+    *.envsh) source "$script"     ;;
+    *.sh   )        "$script" "$@";;
+  esac
 done
 
-#
-# Stop all services
-function __stop() {
-  find /etc/init.d/ -type f -exec {} stop \;
+
+# Daemonize commands as services.
+if [[ "$1" == "daemonize" ]]; then
+  shift;
+  daemonize "$@";
+
+# Run command then exit.
+elif [[ ! -z "$1" ]]; then
+  "$@"
   exit;
-}
 
-#
-# Stop all services when we receive a signal
-trap __stop INT QUIT TERM;
+fi
 
-#
-# Keep process running
-sleep infinity &
-wait;
+
+# Run all services until a signal is received.
+# - check status of the enabled services every 5s.
+# - start stopped services with 3 retries, exit on failure.
+# - sleep between checks until an INT, QUIT, or STOP signal is given.
+# - shutdown all running services before exiting.
+service monitor $ENABLED_SERVICES;

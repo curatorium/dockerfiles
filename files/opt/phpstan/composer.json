@@ -4,8 +4,16 @@
         "allow-plugins": true
     },
     "require": {
-        "phpstan/phpstan": "*",
         "ekino/phpstan-banned-code": "*",
-        "nunomaduro/larastan": "*"
+        "nunomaduro/larastan": "*",
+        "phpat/phpat": "*",
+        "phpstan/phpstan": "*",
+        "phpstan/phpstan-beberlei-assert": "*",
+        "phpstan/phpstan-deprecation-rules": "*",
+        "phpstan/phpstan-doctrine": "*",
+        "phpstan/phpstan-symfony": "*",
+        "shipmonk/dead-code-detector": "*",
+        "staabm/phpstan-dba": "*",
+        "staabm/phpstan-todo-by": "*"
     }
 }

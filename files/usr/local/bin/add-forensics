@@ -1,0 +1,15 @@
+#!/bin/bash -ex
+
+[[ -z "$(ls /var/lib/apt/lists)" ]] && apt update;
+
+add-debug;
+
+PACKAGES=$(cat <<LIST
+  dnsutils
+  iproute2
+  net-tools
+  netcat-traditional
+  util-linux
+LIST
+);
+apt install -y --no-install-recommends $PACKAGES;

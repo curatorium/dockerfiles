@@ -1,31 +1,16 @@
-version: "3.9"
-
 services:
   base:
     build:
-      args: &build-args
-        NODEVS: $NODEVS
-        PHPVS: $PHPVS
-        X_ARCH: $X_ARCH
-      target: base
-    image: $ORG/php-$PHPVS:base-$TS-$X_ARCH
-    platform: linux/$X_ARCH
+      args: &build-args {NODEVS: $NODEVS, PHPVS: $PHPVS}
+      target: php-base
+    image: curatorium/php-$PHPVS:base-$TS-$X_ARCH
 
-  dumper:
+  ci:
     build:
       args: *build-args
-      target: dumper
+      target: ci
     depends_on: [base]
-    image: $ORG/php-$PHPVS:dumper-$TS-$X_ARCH
-    platform: linux/$X_ARCH
-
-  cloud-cli:
-    build:
-      args: *build-args
-      target: cloud-cli
-    depends_on: [base]
-    image: $ORG/php-$PHPVS:cloud-cli-$TS-$X_ARCH
-    platform: linux/$X_ARCH
+    image: curatorium/php-$PHPVS:ci-$TS-$X_ARCH
 
   qa:
     build:
@@ -33,8 +18,7 @@ services:
       target: qa
     command: [bash]
     depends_on: [base]
-    image: $ORG/php-$PHPVS:qa-$TS-$X_ARCH
-    platform: linux/$X_ARCH
+    image: curatorium/php-$PHPVS:qa-$TS-$X_ARCH
 
   fs:
     build:
@@ -42,5 +26,4 @@ services:
       target: fs
     command: [bash]
     depends_on: [qa]
-    image: $ORG/php-$PHPVS:fs-$TS-$X_ARCH
-    platform: linux/$X_ARCH
+    image: curatorium/php-$PHPVS:fs-$TS-$X_ARCH

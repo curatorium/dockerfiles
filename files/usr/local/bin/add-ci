@@ -1,0 +1,60 @@
+#!/bin/bash -ex
+
+X_ARCH=$(dpkg --print-architecture);
+
+[[ -z "$(ls /var/lib/apt/lists)" ]] && apt update;
+
+PACKAGES=$(cat <<LIST
+  7zip
+  bzip2
+  git
+  httpie
+  libfcgi0ldbl
+  libmemcached-tools
+  gron
+  mariadb-client
+  openssh-client
+  redis-tools
+  tar
+  unzip
+  xz-utils
+  zip
+LIST
+);
+apt install -y --no-install-recommends $PACKAGES;
+
+#
+# Install eJSON @see https://github.com/shopify/ejson
+curl -1fsSL -o /tmp/ejson.deb https://github.com/shopify/ejson/releases/download/v1.5.2/ejson_1.5.2_linux_$X_ARCH.deb;
+dpkg -i /tmp/ejson.deb;
+
+#
+# Install easy-config @see https://github.com/curatorium/easy-config
+cd /opt/easy-config;
+composer install;
+
+#
+# Install Skeema @see https://skeema.io/
+curl -1fsSL -o /tmp/skeema.deb https://github.com/skeema/skeema/releases/latest/download/skeema_$X_ARCH.deb;
+dpkg -i /tmp/skeema.deb;
+
+#
+# Install YQ for YAML manipulation @see https://mikefarah.gitbook.io/yq/
+curl -1fsSL -o /usr/local/bin/yq https://github.com/mikefarah/yq/releases/download/v4.35.2/yq_linux_$X_ARCH;
+
+#
+# Install Q for CSV querying @see https://harelba.github.io/q/
+if [[ "$X_ARCH" == "amd64" ]]; then
+  curl -1fsSL -o /tmp/q.deb https://github.com/harelba/q/releases/download/v3.1.6/q-text-as-data-3.1.6-1.x86_64.deb;
+  dpkg -i /tmp/q.deb;
+fi
+
+#
+# Install pup for command line HTML processing using CSS selectors
+apt install -y --no-install-recommends python3-html2text;
+curl -1fsSL -o /tmp/pup.zip https://github.com/ericchiang/pup/releases/download/v0.4.0/pup_v0.4.0_linux_$X_ARCH.zip;
+unzip /tmp/pup.zip;
+
+#
+# Install NewRelic CLI
+curl -1fsSL https://download.newrelic.com/install/newrelic-cli/scripts/install.sh | bash

@@ -1,6 +1,7 @@
 [ -z "$PS1" ] && return;
 
 export SHELL="/bin/bash";
+export PATH="$PATH:$KREW_ROOT/bin";
 
 eval "$(dircolors ~/.bash_colors)";
 
@@ -36,3 +37,6 @@ green=$(tput setaf 2);
 blue=$(tput setaf 4);
 reset=$(tput sgr0);
 PS1='\[$red\]\u\[$reset\]@\[$green\]\h\[$reset\]:\[$blue\]\w\[$reset\]\$ ';
+
+display-aliases;
+[[ -f "colophon.json" ]] && printf -- '-%.0s' {1..40} && echo "" && cat colophon.json;

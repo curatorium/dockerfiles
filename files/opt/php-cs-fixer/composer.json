@@ -3,6 +3,6 @@
         "bin-dir": "/usr/local/bin"
     },
     "require": {
-        "phpat/phpat": "*"
+        "friendsofphp/php-cs-fixer": "*"
     }
 }

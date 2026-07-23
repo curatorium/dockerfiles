@@ -3,6 +3,8 @@
     "bin-dir": "/usr/local/bin"
   },
   "require": {
-    "psy/psysh": "@stable"
+    "psy/psysh": "@stable",
+    "teamdotblue/psysh-bundle": "*",
+    "laravel/tinker": "*"
   }
 }

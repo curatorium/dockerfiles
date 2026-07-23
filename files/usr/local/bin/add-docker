@@ -1,18 +1,34 @@
 #!/bin/bash -ex
 
+X_ARCH=$(dpkg --print-architecture);
+
 #
 # Install Docker + docker-compose
 curl -1fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/trusted.gpg.d/docker.gpg
 source /etc/os-release;
 echo "deb https://download.docker.com/linux/debian $VERSION_CODENAME stable" > /etc/apt/sources.list.d/docker.list;
 apt update;
-apt install -y --no-install-recommends docker-ce-cli docker-compose-plugin;
+apt install -y --no-install-recommends docker-ce-cli docker-compose-plugin docker-buildx-plugin;
 
 #
 # Install Kubectl
-KUBECTLVS=$(curl -L -s https://dl.k8s.io/release/stable.txt);
-curl -1fsSL -o /usr/local/bin/kubectl "https://dl.k8s.io/release/$KUBECTLVS/bin/linux/${X_ARCH}/kubectl"
+KUBECTLVS=$(curl -1fsSL https://dl.k8s.io/release/stable.txt);
+curl -1fsSL -o /usr/local/bin/kubectl "https://dl.k8s.io/release/$KUBECTLVS/bin/linux/$X_ARCH/kubectl"
 
 #
-# Mark all new binaries as executable
-chmod +x /usr/local/bin/*;
+# Install Kubelogin (Azure AAD auth helper for kubectl)
+KUBELOGINVS=$(curl -1fsSL https://api.github.com/repos/Azure/kubelogin/releases/latest | jq -r .tag_name);
+apt install -y --no-install-recommends unzip;
+curl -1fsSL -o /tmp/kubelogin.zip "https://github.com/Azure/kubelogin/releases/download/$KUBELOGINVS/kubelogin-linux-$X_ARCH.zip";
+unzip -j /tmp/kubelogin.zip "bin/linux_$X_ARCH/kubelogin" -d /usr/local/bin/;
+chmod +x /usr/local/bin/kubelogin;
+rm /tmp/kubelogin.zip;
+
+#
+# Install Krew
+curl -1fsSL -o /tmp/krew.tgz "https://github.com/kubernetes-sigs/krew/releases/latest/download/krew-linux_$X_ARCH.tar.gz"
+tar --extract --file=/tmp/krew.tgz --directory /tmp;
+mv /tmp/krew-linux_$X_ARCH /usr/local/bin/kubectl-krew;
+
+# Install various Krew plugins
+kubectl-krew install grep exec-cronjob krew slice split-yaml sort-manifests;
