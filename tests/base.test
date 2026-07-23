@@ -1,0 +1,86 @@
+# shellcheck shell=bash
+# shellcheck disable=SC2016
+# base role — the foundation: binaries, php extensions, version, serving.
+source "$(dirname "${BASH_SOURCE[0]}")/.deps/lib.sh"
+IMAGE="${IMAGE:-$(img_for base)}"
+
+test:path:php()         { on_path "$IMAGE" php; }
+test:run:php()          { runs    "$IMAGE" php; }
+test:path:composer()    { on_path "$IMAGE" composer; }
+test:run:composer()     { runs    "$IMAGE" composer; }
+test:path:nginx()       { on_path "$IMAGE" nginx; }
+test:run:nginx()        { runs    "$IMAGE" nginx; }
+test:path:jq()          { on_path "$IMAGE" jq; }
+test:run:jq()           { runs    "$IMAGE" jq; }
+test:path:tini()        { on_path "$IMAGE" tini; }
+test:run:tini()         { runs    "$IMAGE" tini; }
+test:path:wait-until()  { on_path "$IMAGE" wait-until; }
+test:run:wait-until()   { runs    "$IMAGE" wait-until; }
+test:path:bash-import() { on_path "$IMAGE" bash-import; }
+test:run:bash-import()  { runs    "$IMAGE" bash-import; }
+test:path:bash-test()   { on_path "$IMAGE" bash-test; }
+test:run:bash-test()    { runs    "$IMAGE" bash-test; }
+test:path:steward()     { on_path "$IMAGE" steward; }
+test:run:steward()      { runs    "$IMAGE" steward; }
+
+test:ext:curl()         { has_ext "$IMAGE" curl; }
+test:ext:gd()           { has_ext "$IMAGE" gd; }
+test:ext:intl()         { has_ext "$IMAGE" intl; }
+test:ext:mbstring()     { has_ext "$IMAGE" mbstring; }
+test:ext:mysqli()       { has_ext "$IMAGE" mysqli; }
+test:ext:pdo_mysql()    { has_ext "$IMAGE" pdo_mysql; }
+test:ext:zip()          { has_ext "$IMAGE" zip; }
+test:ext:bcmath()       { has_ext "$IMAGE" bcmath; }
+test:ext:xml()          { has_ext "$IMAGE" xml; }
+test:ext:redis()        { has_ext "$IMAGE" redis; }
+test:ext:igbinary()     { has_ext "$IMAGE" igbinary; }
+test:ext:apcu()         { has_ext "$IMAGE" apcu; }
+test:ext:timezonedb()   { has_ext "$IMAGE" timezonedb; }
+
+test:php-version()      { php_version "$IMAGE"; }
+test:serves()           { serves "$IMAGE"; }
+
+output() {
+	cat <<-MD
+		# Image tests — base — php-$PHPVS / $X_ARCH
+
+		## Binaries
+
+		| Binary      | On PATH | Runs |
+		|-------------|---------|------|
+		| php         | $(t path:php) | $(t run:php) |
+		| composer    | $(t path:composer) | $(t run:composer) |
+		| nginx       | $(t path:nginx) | $(t run:nginx) |
+		| jq          | $(t path:jq) | $(t run:jq) |
+		| tini        | $(t path:tini) | $(t run:tini) |
+		| wait-until  | $(t path:wait-until) | $(t run:wait-until) |
+		| bash-import | $(t path:bash-import) | $(t run:bash-import) |
+		| bash-test   | $(t path:bash-test) | $(t run:bash-test) |
+		| steward     | $(t path:steward) | $(t run:steward) |
+
+		## PHP extensions
+
+		| Extension  | Loaded |
+		|------------|--------|
+		| curl       | $(t ext:curl) |
+		| gd         | $(t ext:gd) |
+		| intl       | $(t ext:intl) |
+		| mbstring   | $(t ext:mbstring) |
+		| mysqli     | $(t ext:mysqli) |
+		| pdo_mysql  | $(t ext:pdo_mysql) |
+		| zip        | $(t ext:zip) |
+		| bcmath     | $(t ext:bcmath) |
+		| xml        | $(t ext:xml) |
+		| redis      | $(t ext:redis) |
+		| igbinary   | $(t ext:igbinary) |
+		| apcu       | $(t ext:apcu) |
+		| timezonedb | $(t ext:timezonedb) |
+
+		## Runtime
+
+		| Behaviour                    | Result |
+		|------------------------------|--------|
+		| php reports $PHPVS              | $(t php-version) |
+		| nginx + php-fpm serve on :80 | $(t serves) |
+	MD
+}

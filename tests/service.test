@@ -1,0 +1,295 @@
+# shellcheck shell=bash
+# shellcheck disable=SC2016  # single-quote intentional in heredocs
+
+# Service + entrypoint behaviour safety-net.
+# Runs INSIDE the built image (root, php on PATH, /etc/init.d writable).
+# Every assertion is black-box (observable exit codes and side-effects only).
+
+# Run on the host it re-execs itself inside the image (so the caller only needs
+# `bash-test tests/service.test`); $IN_IMAGE marks the in-container pass.
+if [ -z "${IN_IMAGE:-}" ]; then
+	IMAGE="${IMAGE:-curatorium/php-${PHPVS:?}:base-${TS:?}-${X_ARCH:?}}"
+	HERE=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+	exec docker run --rm -e IN_IMAGE=1 -v "$HERE:/tests" --entrypoint bash-test "$IMAGE" /tests/service.test
+fi
+
+STUB="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/.stub/mirror.php"
+ARGDUMP="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/.stub/argdump.php"
+ENTRYPOINT_D="/entrypoint.d"
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+# wait_status <svc> <code> [tries=20]
+# Polls `service status <svc>` up to <tries> times (0.2 s apart).
+wait_status() {
+    local svc="$1" want="$2" tries="${3:-20}"
+    local i
+    for (( i=0; i<tries; i++ )); do
+        service status "$svc" >/dev/null 2>&1; local rc=$?
+        [[ "$rc" -eq "$want" ]] && return 0
+        sleep 0.2
+    done
+    service status "$svc" >/dev/null 2>&1; local rc=$?
+    assert:status "$rc" "$want" "wait_status $svc"
+}
+
+# svc_clean <name>  — stop + uninstall, tolerating not-installed
+svc_clean() {
+    local svc="$1"
+    service stop    "$svc" >/dev/null 2>&1 || true
+    service uninstall "$svc" >/dev/null 2>&1 || true
+    rm -f "/tmp/$svc.out"
+}
+
+# ---------------------------------------------------------------------------
+# Service lifecycle
+# ---------------------------------------------------------------------------
+
+test:lifecycle:status-not-installed() {
+    svc_clean tsvc
+    service status tsvc >/dev/null 2>&1; local rc=$?
+    assert:status "$rc" 9 "not-installed status"
+}
+
+test:lifecycle:status-after-install() {
+    svc_clean tsvc
+    service install tsvc php "$STUB" tsvc >/dev/null 2>&1
+    service status tsvc >/dev/null 2>&1; local rc=$?
+    svc_clean tsvc
+    assert:status "$rc" 3 "installed-but-stopped status"
+}
+
+test:lifecycle:status-after-start() {
+    svc_clean tsvc
+    rm -f /tmp/tsvc.out
+    service install tsvc php "$STUB" tsvc >/dev/null 2>&1
+    service start tsvc >/dev/null 2>&1
+    sleep 0.2
+    service status tsvc >/dev/null 2>&1; local rc=$?
+    local wrote=0
+    [[ -f /tmp/tsvc.out ]] && wrote=1
+    svc_clean tsvc
+    assert:status "$rc" 0 "running status"
+    assert:status "$wrote" 1 "stub wrote output file"
+}
+
+test:lifecycle:status-after-stop() {
+    svc_clean tsvc
+    service install tsvc php "$STUB" tsvc >/dev/null 2>&1
+    service start tsvc >/dev/null 2>&1
+    sleep 0.2
+    service stop tsvc >/dev/null 2>&1
+    service status tsvc >/dev/null 2>&1; local rc=$?
+    svc_clean tsvc
+    assert:status "$rc" 3 "stopped status"
+}
+
+test:lifecycle:status-after-uninstall() {
+    svc_clean tsvc
+    service install tsvc php "$STUB" tsvc >/dev/null 2>&1
+    service uninstall tsvc >/dev/null 2>&1
+    service status tsvc >/dev/null 2>&1; local rc=$?
+    assert:status "$rc" 9 "uninstalled status"
+}
+
+test:lifecycle:idempotent-start() {
+    svc_clean tsvc
+    service install tsvc php "$STUB" tsvc >/dev/null 2>&1
+    service start tsvc >/dev/null 2>&1
+    sleep 0.2
+    service start tsvc >/dev/null 2>&1; local rc=$?
+    svc_clean tsvc
+    assert:status "$rc" 1 "start already-running → 1"
+}
+
+test:lifecycle:idempotent-stop() {
+    svc_clean tsvc
+    service install tsvc php "$STUB" tsvc >/dev/null 2>&1
+    # not started → already stopped
+    service stop tsvc >/dev/null 2>&1; local rc=$?
+    svc_clean tsvc
+    assert:status "$rc" 1 "stop already-stopped → 1"
+}
+
+test:lifecycle:restart-reruns-command() {
+    svc_clean tsvc
+    rm -f /tmp/tsvc.out
+    service install tsvc php "$STUB" tsvc >/dev/null 2>&1
+    service start tsvc >/dev/null 2>&1
+    sleep 0.2
+    local before
+    before=$(wc -l < /tmp/tsvc.out 2>/dev/null || echo 0)
+    service restart tsvc >/dev/null 2>&1
+    sleep 0.2
+    local after
+    after=$(wc -l < /tmp/tsvc.out 2>/dev/null || echo 0)
+    svc_clean tsvc
+    local delta=$(( after - before ))
+    assert:status "$delta" 1 "restart appended exactly 1 line to stub output"
+}
+
+test:lifecycle:passes-glob-arg-literally() {
+    svc_clean tglob
+    rm -f /tmp/tglob.args
+    # The wrapper expands args in ITS OWN cwd, so populate the caller's cwd with a
+    # canary: a mishandled '*' would glob to it instead of reaching the command.
+    local dir; dir=$(mktemp -d); touch "$dir/glob-canary"
+    ( cd "$dir" && service install tglob php "$ARGDUMP" tglob '*' >/dev/null 2>&1 \
+                && service start tglob >/dev/null 2>&1 )
+    sleep 0.3
+    local got; got=$(cat /tmp/tglob.args 2>/dev/null)
+    svc_clean tglob; rm -rf "$dir"
+    local ok=0; [ "$got" = "*" ] && ok=1
+    assert:status "$ok" 1 "literal '*' arg reached command (got: '$got')"
+}
+
+# ---------------------------------------------------------------------------
+# Monitor
+# ---------------------------------------------------------------------------
+
+test:monitor:starts-enabled-service() {
+    svc_clean tmon1
+    service install tmon1 php "$STUB" tmon1 >/dev/null 2>&1
+    service enable  tmon1 >/dev/null 2>&1
+    setsid env SERVICE_MONITOR_SLEEP=0.2 service monitor >/dev/null 2>&1 </dev/null &
+    local mon=$!
+    wait_status tmon1 0
+    local rc=$?
+    kill -- -"$mon" 2>/dev/null; wait "$mon" 2>/dev/null || true
+    svc_clean tmon1
+    assert:status "$rc" 0 "monitor started enabled service"
+}
+
+test:monitor:restarts-killed-service() {
+    svc_clean tmon2
+    service install tmon2 php "$STUB" tmon2 >/dev/null 2>&1
+    service enable  tmon2 >/dev/null 2>&1
+    setsid env SERVICE_MONITOR_SLEEP=0.2 service monitor >/dev/null 2>&1 </dev/null &
+    local mon=$!
+    wait_status tmon2 0
+    # Kill the daemon process by matching its unique stub argument
+    local dpid
+    dpid=$(pgrep -f "mirror.php tmon2" 2>/dev/null | head -1)
+    if [[ -n "$dpid" ]]; then kill -9 "$dpid" 2>/dev/null || true; fi
+    wait_status tmon2 0 30
+    local rc=$?
+    kill -- -"$mon" 2>/dev/null; wait "$mon" 2>/dev/null || true
+    svc_clean tmon2
+    assert:status "$rc" 0 "monitor restarted killed service"
+}
+
+test:monitor:no-restart-disabled-service() {
+    svc_clean tmon3
+    service install tmon3 php "$STUB" tmon3 >/dev/null 2>&1
+    service enable  tmon3 >/dev/null 2>&1
+    setsid env SERVICE_MONITOR_SLEEP=0.2 service monitor >/dev/null 2>&1 </dev/null &
+    local mon=$!
+    wait_status tmon3 0
+    # Disable then kill
+    service disable tmon3 >/dev/null 2>&1
+    local dpid
+    dpid=$(pgrep -f "mirror.php tmon3" 2>/dev/null | head -1)
+    if [[ -n "$dpid" ]]; then kill -9 "$dpid" 2>/dev/null || true; fi
+    sleep 1
+    service status tmon3 >/dev/null 2>&1; local rc=$?
+    kill -- -"$mon" 2>/dev/null; wait "$mon" 2>/dev/null || true
+    svc_clean tmon3
+    # Status must be 3 (stopped/installed) — not 0 (running)
+    local stayed_stopped=0
+    [[ "$rc" -ne 0 ]] && stayed_stopped=1
+    assert:status "$stayed_stopped" 1 "disabled service was not restarted"
+}
+
+# ---------------------------------------------------------------------------
+# Entrypoint wiring
+# ---------------------------------------------------------------------------
+
+test:entrypoint:runs-sh-scripts() {
+    local sentinel
+    sentinel=$(mktemp)
+    rm -f "$sentinel"
+    local script="$ENTRYPOINT_D/99-test-sh-$$.sh"
+    printf '#!/bin/bash\ntouch "%s"\n' "$sentinel" > "$script"
+    chmod +x "$script"
+    entrypoint echo sentinel-cmd >/dev/null 2>&1 || true
+    local existed=0
+    [[ -f "$sentinel" ]] && existed=1
+    rm -f "$script" "$sentinel"
+    assert:status "$existed" 1 "entrypoint executed .sh script"
+}
+
+test:entrypoint:sources-envsh() {
+    local varname="TEST_ENVSH_$$"
+    local script="$ENTRYPOINT_D/99-test-$$.envsh"
+    printf '#!/bin/bash\nexport %s=envsh-value\n' "$varname" > "$script"
+    chmod +x "$script"
+    local out
+    out=$(entrypoint env 2>/dev/null)
+    local rc=$?
+    rm -f "$script"
+    assert:contains "$out" "$varname=envsh-value" "envsh variable visible in entrypoint env"
+}
+
+test:entrypoint:oneshot-command() {
+    local out
+    out=$(entrypoint echo MARKER-$$ 2>/dev/null)
+    assert:contains "$out" "MARKER-$$" "one-shot command output captured"
+}
+
+test:entrypoint:enabled-services-monitored() {
+    local svc="tep$$"
+    svc_clean "$svc"
+    service install "$svc" php "$STUB" "$svc" >/dev/null 2>&1
+    # entrypoint forks a `service monitor` child; run it in its own session and
+    # detached from our stdout so bash-test's output capture can't block on the
+    # child's inherited pipe, then tear down the whole process group.
+    setsid env ENABLED_SERVICES="$svc" SERVICE_MONITOR_SLEEP=0.2 entrypoint >/dev/null 2>&1 </dev/null &
+    local ep=$!
+    wait_status "$svc" 0
+    local rc=$?
+    kill -- -"$ep" 2>/dev/null; wait "$ep" 2>/dev/null || true
+    svc_clean "$svc"
+    assert:status "$rc" 0 "ENABLED_SERVICES service reached running state"
+}
+
+# ---------------------------------------------------------------------------
+# Output table
+# ---------------------------------------------------------------------------
+
+output() { cat <<MD
+# Service & Entrypoint tests
+
+## Service lifecycle
+
+| Behaviour | Result |
+|-----------|--------|
+| not-installed → status 9              | $(t lifecycle:status-not-installed) |
+| after install → status 3              | $(t lifecycle:status-after-install) |
+| after start → status 0, stub ran      | $(t lifecycle:status-after-start) |
+| after stop → status 3                 | $(t lifecycle:status-after-stop) |
+| after uninstall → status 9            | $(t lifecycle:status-after-uninstall) |
+| start already-running → 1             | $(t lifecycle:idempotent-start) |
+| stop already-stopped → 1              | $(t lifecycle:idempotent-stop) |
+| restart re-runs command (+1 line)     | $(t lifecycle:restart-reruns-command) |
+| literal '*' arg passed, not globbed   | $(t lifecycle:passes-glob-arg-literally) |
+
+## Monitor
+
+| Behaviour | Result |
+|-----------|--------|
+| monitor starts enabled service        | $(t monitor:starts-enabled-service) |
+| monitor restarts killed service       | $(t monitor:restarts-killed-service) |
+| monitor does NOT restart disabled svc | $(t monitor:no-restart-disabled-service) |
+
+## Entrypoint wiring
+
+| Behaviour | Result |
+|-----------|--------|
+| .sh scripts execute                   | $(t entrypoint:runs-sh-scripts) |
+| .envsh scripts sourced into env       | $(t entrypoint:sources-envsh) |
+| one-shot command runs and exits       | $(t entrypoint:oneshot-command) |
+| ENABLED_SERVICES fed to monitor       | $(t entrypoint:enabled-services-monitored) |
+MD
+}
