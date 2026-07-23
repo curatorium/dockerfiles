@@ -1,0 +1,41 @@
+name: Scout CVE scan
+
+# Docker Scout is free for analysing images: the CLI/action carries no cost and,
+# for an OSI-licensed public repo, GitHub code scanning (the Security tab) is free
+# too. Dispatched by hand against the PUBLISHED images, so newly-disclosed CVEs
+# in already-built images can be checked without a rebuild.
+on:
+  workflow_dispatch: ~ # manual-only until images are first published
+
+permissions:
+  contents: read
+  security-events: write # upload-sarif → code scanning
+
+jobs:
+  scout:
+    name: Scout ${{ matrix.php }} ${{ matrix.role }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.0', '8.1', '8.2', '8.3', '8.4', '8.5']
+        # ci and fs together cover every layer: fs ⊃ qa ⊃ base, ci ⊃ base.
+        role: [ci, fs]
+
+    runs-on: ubuntu-24.04
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/login-action@v3
+        with: {username: "${{ secrets.DOCKERHUB_USERNAME }}", password: "${{ secrets.DOCKERHUB_TOKEN }}"}
+
+      - uses: docker/scout-action@v1
+        with:
+          command: cves
+          image: curatorium/php-${{ matrix.php }}:${{ matrix.role }}
+          sarif-file: scout-${{ matrix.php }}-${{ matrix.role }}.sarif
+
+      - uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: scout-${{ matrix.php }}-${{ matrix.role }}.sarif
+          category: scout-${{ matrix.php }}-${{ matrix.role }}
