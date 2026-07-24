@@ -21,13 +21,11 @@ jobs:
       phpvs: ${{ steps.phpvs.outputs.phpvs }}
       nodevs: ${{ steps.phpvs.outputs.nodevs }}
     steps:
-      # One timestamp for the whole run: a month rollover mid-run would otherwise
-      # make the merge job look for per-arch tags the build job never created.
+      # Shared so a month rollover mid-run can't split build and merge tags.
       - id: ts
         run: echo "ts=$(date +%y.%m)" >>"$GITHUB_OUTPUT"
 
-      # Matrices take JSON arrays, not space-separated strings. The NODEVS include
-      # list is filtered alongside, or a dropped version spawns a ROLE-less job.
+      # Filtered in lockstep: an include entry outside PHPVS spawns a ROLE-less job.
       - id: phpvs
         env: {IN: "${{ inputs.phpvs }}", NODEVS: '{"8.0":18,"8.1":18,"8.2":20,"8.3":20,"8.4":22,"8.5":25}'}
         run: |
@@ -43,8 +41,7 @@ jobs:
     permissions: {contents: read, id-token: write, attestations: write}
     strategy:
       fail-fast: false
-      # Docker Hub answers 429 to the manifest HEAD when the whole matrix pushes
-      # at once; 8 concurrent pushes stays under the account's request budget.
+      # Docker Hub 429s the manifest HEAD when the whole matrix pushes at once.
       max-parallel: 8
       matrix:
         PHPVS: ${{ fromJSON(needs.version.outputs.phpvs) }}
@@ -64,7 +61,6 @@ jobs:
       - uses: docker/login-action@v3
         with: {username: "${{ secrets.DOCKERHUB_USERNAME }}", password: "${{ secrets.DOCKERHUB_TOKEN }}"}
 
-      # Build this role for this arch and push it by digest (no tag yet).
       - uses: docker/build-push-action@v6
         id: build
         with:
@@ -80,7 +76,6 @@ jobs:
           cache-to: type=gha,scope=${{ matrix.PHPVS }}-${{ matrix.ROLE }}-${{ matrix.X_ARCH }},mode=max
           outputs: type=image,name=curatorium/php-${{ matrix.PHPVS }},push-by-digest=true,name-canonical=true,push=true
 
-      # Test the pushed digest with this role's own suite (plus service.test for base).
       - name: Test
         env: {SHA: "${{ steps.build.outputs.digest }}"}
         run: |
@@ -95,7 +90,6 @@ jobs:
       - uses: actions/attest-build-provenance@v2
         with: {subject-name: "docker.io/${{ env.REPO }}", subject-digest: "${{ steps.build.outputs.digest }}", push-to-registry: true}
 
-      # Tag the tested digest as the per-arch tag the merge job will join.
       - name: Push per-arch tag
         env: {SHA: "${{ steps.build.outputs.digest }}"}
         run: |
@@ -119,8 +113,7 @@ jobs:
       - uses: docker/login-action@v3
         with: {username: "${{ secrets.DOCKERHUB_USERNAME }}", password: "${{ secrets.DOCKERHUB_TOKEN }}"}
 
-      # Join the per-arch tags into the multi-arch :role-$TS and rolling :role.
-      # imagetools (not docker manifest) so the per-arch attestations survive.
+      # imagetools rather than docker manifest: it preserves the per-arch attestations.
       - name: Join per-arch tags
         id: join
         run: |
@@ -129,7 +122,6 @@ jobs:
           DIGEST=$(docker buildx imagetools inspect "$REPO:$ROLE-$TS" --format '{{.Manifest.Digest}}')
           echo "digest=$DIGEST" >>"$GITHUB_OUTPUT"
 
-      # The per-arch attestations only cover their own manifest; the index that
-      # consumers actually pull needs one of its own.
+      # The per-arch attestations don't cover the index that consumers pull.
       - uses: actions/attest-build-provenance@v2
         with: {subject-name: "docker.io/${{ env.REPO }}", subject-digest: "${{ steps.join.outputs.digest }}", push-to-registry: true}
