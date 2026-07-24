@@ -1,11 +1,11 @@
-name: Build PHP images
+name: Build images
 
 on:
   workflow_dispatch:
     inputs:
-      phpvs:
-        description: Space-separated PHP versions to build
-        default: 8.0 8.1 8.2 8.3 8.4 8.5
+      php:
+        description: 'PHP versions to build (space/comma list, or "all")'
+        default: all
 
 concurrency:
   group: build-${{ github.ref }}
@@ -13,51 +13,61 @@ concurrency:
 
 jobs:
   version:
-    name: Resolve version
-    permissions: {contents: read}
+    name: Version
     runs-on: ubuntu-24.04
     outputs:
-      ts: ${{ steps.ts.outputs.ts }}
-      phpvs: ${{ steps.phpvs.outputs.phpvs }}
-      nodevs: ${{ steps.phpvs.outputs.nodevs }}
+      ts: ${{ steps.v.outputs.ts }}
+      nodevs: ${{ steps.v.outputs.nodevs }}
+      php: ${{ steps.v.outputs.php }}
     steps:
-      # Shared so a month rollover mid-run can't split build and merge tags.
-      - id: ts
-        run: echo "ts=$(date +%y.%m)" >>"$GITHUB_OUTPUT"
+      - uses: actions/checkout@v4
 
-      # Filtered in lockstep: an include entry outside PHPVS spawns a ROLE-less job.
-      - id: phpvs
-        env: {IN: "${{ inputs.phpvs }}", NODEVS: '{"8.0":18,"8.1":18,"8.2":20,"8.3":20,"8.4":22,"8.5":25}'}
+      - name: Assert Dockerfile is freshly generated
         run: |
-          LIST=$(jq -cR 'split(" ") | map(select(length > 0))' <<<"$IN")
-          echo "phpvs=$LIST" >>"$GITHUB_OUTPUT"
-          echo "nodevs=$(jq -c --argjson list "$LIST" \
-            'to_entries | map(select(.key as $k | $list | index($k)) | {PHPVS: .key, NODEVS: .value})' \
-            <<<"$NODEVS")" >>"$GITHUB_OUTPUT"
+          ./generate-dockerfile
+          git diff --exit-code Dockerfile \
+            || { echo "Dockerfile out of date — run ./generate-dockerfile and commit"; exit 1; }
 
-  build:
-    name: Build ${{ matrix.PHPVS }} ${{ matrix.ROLE }} ${{ matrix.X_ARCH }}
+      - id: v
+        run: |
+          echo "ts=$(date +%y.%m)" >> "$GITHUB_OUTPUT"
+          echo "nodevs=$(sed -n 's/^NODEVS=//p' .env | tr -d '[:space:]')" >> "$GITHUB_OUTPUT"
+
+          FULL='[
+            {"php":"8.0","node":"18"},
+            {"php":"8.1","node":"18"},
+            {"php":"8.2","node":"20"},
+            {"php":"8.3","node":"20"},
+            {"php":"8.4","node":"22"},
+            {"php":"8.5","node":"25"}
+          ]'
+          sel='${{ inputs.php }}'
+          if [ -z "$sel" ] || [ "$sel" = all ]; then
+            arr=$(jq -c . <<<"$FULL")
+          else
+            list=$(echo "$sel" | tr ',' ' ')
+            arr=$(jq -c --arg list "$list" \
+              '[ .[] | select(.php as $p | ($list | split(" ") | map(select(length > 0))) | index($p)) ]' <<<"$FULL")
+          fi
+          echo "php=$arr" >> "$GITHUB_OUTPUT"
+
+  infra-build:
+    name: Infra build ${{ matrix.role }} ${{ matrix.arch }}
     needs: version
     permissions: {contents: read, id-token: write, attestations: write}
     strategy:
       fail-fast: false
       matrix:
-        PHPVS: ${{ fromJSON(needs.version.outputs.phpvs) }}
-        ROLE: [base, ci, qa, fs]
-        X_ARCH: [amd64, arm64]
-        include: ${{ fromJSON(needs.version.outputs.nodevs) }}
-    runs-on: ${{ matrix.X_ARCH == 'arm64' && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
+        role: [base, ci, az-ci]
+        arch: [amd64, arm64]
+    runs-on: ${{ matrix.arch == 'arm64' && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
     env:
-      PHPVS: ${{ matrix.PHPVS }}
-      X_ARCH: ${{ matrix.X_ARCH }}
-      ROLE: ${{ matrix.ROLE }}
-      REPO: curatorium/php-${{ matrix.PHPVS }}
-      TS: ${{ needs.version.outputs.ts }}
+      REPO: curatorium/${{ matrix.role }}
+      X_ARCH: ${{ matrix.arch }}
     steps:
       - uses: actions/checkout@v4
       - uses: docker/setup-buildx-action@v3
         with:
-          driver-opts: image=mirror.gcr.io/moby/buildkit:buildx-stable-1
           buildkitd-config-inline: |
             [registry."docker.io"]
               mirrors = ["mirror.gcr.io"]
@@ -65,79 +75,187 @@ jobs:
         with: {username: "${{ secrets.DOCKERHUB_USERNAME }}", password: "${{ secrets.DOCKERHUB_TOKEN }}"}
 
       - uses: docker/build-push-action@v6
-        id: build
+        id: push
         with:
           context: .
-          target: ${{ matrix.ROLE == 'base' && 'php-base' || matrix.ROLE }}
-          platforms: linux/${{ matrix.X_ARCH }}
-          provenance: mode=max
-          sbom: generator=mirror.gcr.io/docker/buildkit-syft-scanner:stable-1
+          file: Dockerfile
+          target: ${{ matrix.role }}
+          platforms: linux/${{ matrix.arch }}
           build-args: |
-            PHPVS=${{ matrix.PHPVS }}
-            NODEVS=${{ matrix.NODEVS }}
-          cache-from: type=gha,scope=${{ matrix.PHPVS }}-${{ matrix.ROLE }}-${{ matrix.X_ARCH }}
-          cache-to: type=gha,scope=${{ matrix.PHPVS }}-${{ matrix.ROLE }}-${{ matrix.X_ARCH }},mode=max
-          outputs: type=image,name=curatorium/php-${{ matrix.PHPVS }},push-by-digest=true,name-canonical=true,push=true
+            ${{ (matrix.role == 'ci' || matrix.role == 'az-ci') && format('NODEVS={0}', needs.version.outputs.nodevs) || '' }}
+          provenance: mode=max
+          sbom: true
+          cache-from: type=registry,ref=${{ env.REPO }}:cache-${{ matrix.arch }}
+          cache-to: type=registry,ref=${{ env.REPO }}:cache-${{ matrix.arch }},mode=max
+          outputs: type=image,name=${{ env.REPO }},push-by-digest=true,name-canonical=true,push=true
+
+      - name: Fetch bash-test
+        run: |
+          sudo curl -fsSL -o /usr/local/bin/bash-import https://github.com/curatorium/bash-import/releases/latest/download/bash-import
+          sudo curl -fsSL -o /usr/local/bin/bash-test   https://github.com/curatorium/bash-import/releases/latest/download/bash-test
+          sudo chmod +x /usr/local/bin/bash-import /usr/local/bin/bash-test
 
       - name: Test
-        env: {SHA: "${{ steps.build.outputs.digest }}"}
+        run: IMAGE="$REPO@${{ steps.push.outputs.digest }}" bash-test tests/${{ matrix.role }}.test
+
+      - name: Test service manager (base only)
+        if: matrix.role == 'base'
         run: |
-          BT="$RUNNER_TEMP/bash-test"
-          curl -1fsSLR https://github.com/curatorium/bash-import/releases/latest/download/bash-test -o "$BT"
-          chmod +x "$BT"
-          IMAGE="$REPO@$SHA" "$BT" "tests/$ROLE.test"
-          if [ "$ROLE" = base ]; then
-            IMAGE="$REPO@$SHA" "$BT" tests/service.test
-          fi
+          docker run --rm -v "$PWD/tests:/tests" --entrypoint bash \
+            "$REPO@${{ steps.push.outputs.digest }}" -c 'bash-test /tests/service.test'
 
       - uses: actions/attest-build-provenance@v2
-        with: {subject-name: "docker.io/${{ env.REPO }}", subject-digest: "${{ steps.build.outputs.digest }}", push-to-registry: true}
-
-      - name: Push per-arch tag
-        uses: nick-fields/retry@v3
-        env: {SHA: "${{ steps.build.outputs.digest }}"}
         with:
-          max_attempts: 5
-          timeout_minutes: 10
-          retry_wait_seconds: 150
-          command: docker buildx imagetools create -t "$REPO:$ROLE-$TS-$X_ARCH" "$REPO@$SHA"
+          subject-name: docker.io/${{ env.REPO }}
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
 
-  merge:
-    name: Merge ${{ matrix.PHPVS }} ${{ matrix.ROLE }}
-    needs: [version, build]
+      - run: |
+          mkdir -p /tmp/d
+          echo -n "${{ steps.push.outputs.digest }}" > "/tmp/d/digest-${{ matrix.role }}-${{ matrix.arch }}"
+      - uses: actions/upload-artifact@v4
+        with: {name: "digest-${{ matrix.role }}-${{ matrix.arch }}", path: "/tmp/d/digest-${{ matrix.role }}-${{ matrix.arch }}"}
+
+  infra-merge:
+    name: Infra merge ${{ matrix.role }}
+    needs: [version, infra-build]
     permissions: {contents: read, id-token: write, attestations: write}
     strategy:
       fail-fast: false
       matrix:
-        PHPVS: ${{ fromJSON(needs.version.outputs.phpvs) }}
-        ROLE: [base, ci, qa, fs]
+        role: [base, ci, az-ci]
     runs-on: ubuntu-24.04
     env:
-      ROLE: ${{ matrix.ROLE }}
-      REPO: curatorium/php-${{ matrix.PHPVS }}
+      REPO: curatorium/${{ matrix.role }}
       TS: ${{ needs.version.outputs.ts }}
     steps:
       - uses: docker/login-action@v3
         with: {username: "${{ secrets.DOCKERHUB_USERNAME }}", password: "${{ secrets.DOCKERHUB_TOKEN }}"}
+      - uses: actions/download-artifact@v4
+        with: {path: /tmp/d, pattern: "digest-${{ matrix.role }}-*", merge-multiple: true}
 
-      # imagetools rather than docker manifest: it preserves the per-arch attestations.
-      - name: Join per-arch tags
+      - name: Merge per-arch digests
         uses: nick-fields/retry@v3
         with:
-          max_attempts: 5
-          timeout_minutes: 10
-          retry_wait_seconds: 150
-          command: >-
-            docker buildx imagetools create -t "$REPO:$ROLE-$TS" -t "$REPO:$ROLE"
-            "$REPO:$ROLE-$TS-amd64" "$REPO:$ROLE-$TS-arm64"
+          timeout_minutes: 15
+          max_attempts: 3
+          command: |
+            A=$(cat "/tmp/d/digest-${{ matrix.role }}-amd64")
+            B=$(cat "/tmp/d/digest-${{ matrix.role }}-arm64")
+            docker buildx imagetools create \
+              -t "$REPO:$TS" -t "$REPO:latest" \
+              "$REPO@$A" "$REPO@$B"
 
-      # Native run so the step output lands in $GITHUB_OUTPUT, which the retry action doesn't expose.
-      - name: Resolve merged digest
-        id: join
+      - id: index
         run: |
-          DIGEST=$(docker buildx imagetools inspect "$REPO:$ROLE-$TS" --format '{{.Manifest.Digest}}')
-          echo "digest=$DIGEST" >>"$GITHUB_OUTPUT"
-
-      # The per-arch attestations don't cover the index that consumers pull.
+          echo "digest=$(docker buildx imagetools inspect "$REPO:$TS" --format '{{json .Manifest.Digest}}' | tr -d '"')" >> "$GITHUB_OUTPUT"
       - uses: actions/attest-build-provenance@v2
-        with: {subject-name: "docker.io/${{ env.REPO }}", subject-digest: "${{ steps.join.outputs.digest }}", push-to-registry: true}
+        with:
+          subject-name: docker.io/${{ env.REPO }}
+          subject-digest: ${{ steps.index.outputs.digest }}
+          push-to-registry: true
+
+  php-build:
+    name: Build php-${{ matrix.entry.php }} ${{ matrix.role }} ${{ matrix.arch }}
+    needs: version
+    permissions: {contents: read, id-token: write, attestations: write}
+    strategy:
+      fail-fast: false
+      matrix:
+        entry: ${{ fromJSON(needs.version.outputs.php) }}
+        role: [base, qa, fs]
+        arch: [amd64, arm64]
+    runs-on: ${{ matrix.arch == 'arm64' && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
+    env:
+      REPO: curatorium/php-${{ matrix.entry.php }}
+      TAG: ${{ matrix.role }}-${{ needs.version.outputs.ts }}-${{ matrix.arch }}
+      X_ARCH: ${{ matrix.arch }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+        with:
+          buildkitd-config-inline: |
+            [registry."docker.io"]
+              mirrors = ["mirror.gcr.io"]
+      - uses: docker/login-action@v3
+        with: {username: "${{ secrets.DOCKERHUB_USERNAME }}", password: "${{ secrets.DOCKERHUB_TOKEN }}"}
+
+      - uses: docker/build-push-action@v6
+        id: push
+        with:
+          context: .
+          file: Dockerfile
+          target: php-${{ matrix.role }}
+          platforms: linux/${{ matrix.arch }}
+          build-args: |
+            PHPVS=${{ matrix.entry.php }}
+            ${{ matrix.role == 'fs' && format('NODEVS={0}', matrix.entry.node) || '' }}
+          provenance: mode=max
+          sbom: true
+          cache-from: type=registry,ref=${{ env.REPO }}:${{ matrix.role }}-cache-${{ matrix.arch }}
+          cache-to: type=registry,ref=${{ env.REPO }}:${{ matrix.role }}-cache-${{ matrix.arch }},mode=max
+          outputs: type=image,name=${{ env.REPO }},push-by-digest=true,name-canonical=true,push=true
+
+      - name: Fetch bash-test
+        run: |
+          sudo curl -fsSL -o /usr/local/bin/bash-import https://github.com/curatorium/bash-import/releases/latest/download/bash-import
+          sudo curl -fsSL -o /usr/local/bin/bash-test   https://github.com/curatorium/bash-import/releases/latest/download/bash-test
+          sudo chmod +x /usr/local/bin/bash-import /usr/local/bin/bash-test
+
+      - name: Test
+        run: IMAGE="$REPO@${{ steps.push.outputs.digest }}" bash-test tests/php-${{ matrix.role }}.test
+
+      - uses: actions/attest-build-provenance@v2
+        with:
+          subject-name: docker.io/${{ env.REPO }}
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
+
+      - run: |
+          mkdir -p /tmp/d
+          echo -n "${{ steps.push.outputs.digest }}" > "/tmp/d/digest-${{ matrix.entry.php }}-${{ matrix.role }}-${{ matrix.arch }}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: "digest-${{ matrix.entry.php }}-${{ matrix.role }}-${{ matrix.arch }}"
+          path: "/tmp/d/digest-${{ matrix.entry.php }}-${{ matrix.role }}-${{ matrix.arch }}"
+
+  php-merge:
+    name: Merge php-${{ matrix.entry.php }} ${{ matrix.role }}
+    needs: [version, php-build]
+    permissions: {contents: read, id-token: write, attestations: write}
+    strategy:
+      fail-fast: false
+      matrix:
+        entry: ${{ fromJSON(needs.version.outputs.php) }}
+        role: [base, qa, fs]
+    runs-on: ubuntu-24.04
+    env:
+      REPO: curatorium/php-${{ matrix.entry.php }}
+      TS: ${{ needs.version.outputs.ts }}
+      ROLE: ${{ matrix.role }}
+    steps:
+      - uses: docker/login-action@v3
+        with: {username: "${{ secrets.DOCKERHUB_USERNAME }}", password: "${{ secrets.DOCKERHUB_TOKEN }}"}
+      - uses: actions/download-artifact@v4
+        with: {path: /tmp/d, pattern: "digest-${{ matrix.entry.php }}-${{ matrix.role }}-*", merge-multiple: true}
+
+      - name: Merge per-arch digests
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 15
+          max_attempts: 3
+          command: |
+            A=$(cat "/tmp/d/digest-${{ matrix.entry.php }}-${{ matrix.role }}-amd64")
+            B=$(cat "/tmp/d/digest-${{ matrix.entry.php }}-${{ matrix.role }}-arm64")
+            docker buildx imagetools create \
+              -t "$REPO:$ROLE-$TS" -t "$REPO:$ROLE" \
+              "$REPO@$A" "$REPO@$B"
+
+      - id: index
+        run: |
+          echo "digest=$(docker buildx imagetools inspect "$REPO:$ROLE-$TS" --format '{{json .Manifest.Digest}}' | tr -d '"')" >> "$GITHUB_OUTPUT"
+      - uses: actions/attest-build-provenance@v2
+        with:
+          subject-name: docker.io/${{ env.REPO }}
+          subject-digest: ${{ steps.index.outputs.digest }}
+          push-to-registry: true

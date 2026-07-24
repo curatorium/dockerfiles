@@ -1,0 +1,47 @@
+# shellcheck shell=bash
+# shellcheck source=tests/.deps/lib.sh
+. "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/.deps/lib.sh"
+
+# php-fs = php-qa plus node/yarn and the frontend framework CLIs.
+: "${IMAGE:=$(img_for php-fs)}"
+
+CLIS=(ng vue react-cli ionic grunt laravel-mix encore)
+RUNTIME=(node yarn)
+
+test:framework-clis() {
+	local miss; miss=$(all_on_path "${CLIS[@]}")
+	[ -z "$miss" ] || { echo "not on PATH: $miss"; return 1; }
+}
+test:framework-clis-run() {
+	local bad; bad=$(all_runs "${CLIS[@]}")
+	[ -z "$bad" ] || { echo "did not run: $bad"; return 1; }
+}
+test:node() {
+	local miss; miss=$(all_on_path "${RUNTIME[@]}")
+	[ -z "$miss" ] || { echo "not on PATH: $miss"; return 1; }
+}
+
+output() { cat <<MD
+# php-fs — $IMAGE
+
+## Framework CLIs (On PATH · Runs)
+
+| Binary | On PATH | Runs |
+|--------|---------|------|
+$(bin_rows "${CLIS[@]}")
+
+## Node runtime (On PATH · Runs)
+
+| Binary | On PATH | Runs |
+|--------|---------|------|
+$(bin_rows "${RUNTIME[@]}")
+
+## Gate
+
+| Check | Result |
+|-------|--------|
+| framework CLIs on PATH | $(t framework-clis) |
+| framework CLIs run     | $(t framework-clis-run) |
+| node/yarn on PATH      | $(t node) |
+MD
+}

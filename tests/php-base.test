@@ -1,0 +1,54 @@
+# shellcheck shell=bash
+# shellcheck source=tests/.deps/lib.sh
+. "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/.deps/lib.sh"
+
+# php-base = base plus php + extensions, nginx, php-fpm and composer; this is the
+# first role that actually serves.
+: "${IMAGE:=$(img_for php-base)}"
+PHPVS="${PHPVS:-$(_env PHPVS)}"
+FPM="php-fpm$PHPVS"
+
+EXTS=(amqp apcu bcmath curl gd http igbinary imagick intl mbstring mongodb msgpack
+      mysqli pdo_mysql odbc pgsql protobuf raphf readline redis soap sqlite3 ssh2
+      stomp xml xsl yaml zip timezonedb)
+TOOLS=(nginx composer "$FPM")
+
+test:php-version() {
+	local got; got=$(php_version)
+	[ "$got" = "$PHPVS" ] || { echo "php $got, want $PHPVS"; return 1; }
+}
+test:extensions() {
+	local miss; miss=$(all_exts "${EXTS[@]}")
+	[ -z "$miss" ] || { echo "not loaded: $miss"; return 1; }
+}
+test:tooling() {
+	local miss; miss=$(all_on_path "${TOOLS[@]}")
+	[ -z "$miss" ] || { echo "not on PATH: $miss"; return 1; }
+}
+test:serving() { serves; }
+
+output() { cat <<MD
+# php-base — $IMAGE
+
+## Extensions (Loaded)
+
+| Extension | Loaded |
+|-----------|--------|
+$(ext_rows "${EXTS[@]}")
+
+## Tooling (On PATH · Runs)
+
+| Binary | On PATH | Runs |
+|--------|---------|------|
+$(bin_rows "${TOOLS[@]}")
+
+## Gate
+
+| Check | Result |
+|-------|--------|
+| php == $PHPVS                   | $(t php-version) |
+| extensions loaded               | $(t extensions) |
+| tooling on PATH                 | $(t tooling) |
+| nginx+php-fpm serve /app on :80 | $(t serving) |
+MD
+}

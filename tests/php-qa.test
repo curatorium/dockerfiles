@@ -1,0 +1,64 @@
+# shellcheck shell=bash
+# shellcheck source=tests/.deps/lib.sh
+. "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/.deps/lib.sh"
+
+# php-qa = php-base plus the test/analysis toolchain. pcov and xdebug ship
+# installed-but-disabled by design, so they are asserted as available, not loaded.
+: "${IMAGE:=$(img_for php-qa)}"
+PHPVS="${PHPVS:-$(_env PHPVS)}"
+MODS="/etc/php/$PHPVS/mods-available"
+
+SCANNERS=(snyk gitleaks local-php-security-checker)
+TOOLS=(phpstan psalm phpunit php-cs-fixer infection phpinsights phpmnd phplint
+       phpdcd psysh composer-require-checker composer-unused codecept
+       var-dump-server ez-cfg)
+
+test:qa-extensions() {
+	has_file "$MODS/pcov.ini" && has_file "$MODS/xdebug.ini" && on_path phpdbg
+}
+test:scanners() {
+	local miss; miss=$(all_on_path "${SCANNERS[@]}")
+	[ -z "$miss" ] || { echo "not on PATH: $miss"; return 1; }
+}
+test:composer-tools() {
+	local miss; miss=$(all_on_path "${TOOLS[@]}")
+	[ -z "$miss" ] || { echo "not on PATH: $miss"; return 1; }
+}
+test:composer-tools-run() {
+	local bad; bad=$(all_runs "${TOOLS[@]}")
+	[ -z "$bad" ] || { echo "did not run: $bad"; return 1; }
+}
+
+output() { cat <<MD
+# php-qa — $IMAGE
+
+## QA extensions
+
+| Extension | State |
+|-----------|-------|
+| \`pcov\` (available, disabled)   | $(mark has_file "$MODS/pcov.ini") |
+| \`xdebug\` (available, disabled) | $(mark has_file "$MODS/xdebug.ini") |
+| \`phpdbg\` (on PATH · runs)      | $(mark on_path phpdbg) · $(mark runs phpdbg) |
+
+## Security scanners (On PATH · Runs)
+
+| Binary | On PATH | Runs |
+|--------|---------|------|
+$(bin_rows "${SCANNERS[@]}")
+
+## Composer tools → /usr/local/bin (On PATH · Runs)
+
+| Binary | On PATH | Runs |
+|--------|---------|------|
+$(bin_rows "${TOOLS[@]}")
+
+## Gate
+
+| Check | Result |
+|-------|--------|
+| pcov/xdebug available, phpdbg present | $(t qa-extensions) |
+| scanners on PATH                      | $(t scanners) |
+| composer tools on PATH                | $(t composer-tools) |
+| composer tools run                    | $(t composer-tools-run) |
+MD
+}

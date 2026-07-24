@@ -1,39 +1,53 @@
 services:
   base:
     env_file: .env
-    volumes: &volumes
-      - ./files/entrypoint.d/00-override-owner.sh:/entrypoint.d/00-override-owner.sh
-      - ./files/entrypoint.d/20-enable-newrelic-agent.sh:/entrypoint.d/20-enable-newrelic-agent.sh
-      - ./files/etc/init.d/var-dump:/etc/init.d/var-dump
-      - ./files/etc/nginx/templates:/etc/nginx/templates
-      - ./files/usr/local/bin/add-az-cli:/usr/local/bin/add-az-cli
-      - ./files/usr/local/bin/add-base:/usr/local/bin/add-base
-      - ./files/usr/local/bin/add-ci:/usr/local/bin/add-ci
-      - ./files/usr/local/bin/add-debug:/usr/local/bin/add-debug
-      - ./files/usr/local/bin/add-docker:/usr/local/bin/add-docker
-      - ./files/usr/local/bin/add-forensics:/usr/local/bin/add-forensics
-      - ./files/usr/local/bin/add-node:/usr/local/bin/add-node
-      - ./files/usr/local/bin/add-node-tools:/usr/local/bin/add-node-tools
-      - ./files/usr/local/bin/add-nr-cli:/usr/local/bin/add-nr-cli
-      - ./files/usr/local/bin/add-php:/usr/local/bin/add-php
-      - ./files/usr/local/bin/add-qa:/usr/local/bin/add-qa
-      - ./files/usr/local/bin/daemonize:/usr/local/bin/daemonize
-      - ./files/usr/local/bin/clean-tmp:/usr/local/bin/clean-tmp
-      - ./files/usr/local/bin/cloud-login:/usr/local/bin/cloud-login
-      - ./files/usr/local/bin/entrypoint:/usr/local/bin/entrypoint
-      - ./files/usr/local/bin/envsubst-only-prefix:/usr/local/bin/envsubst-only-prefix
-      - ./files/usr/local/bin/service:/usr/local/bin/service
-      - ./files/app:/app
+    volumes:
+      - ./base/files/entrypoint.d/00-override-owner.sh:/entrypoint.d/00-override-owner.sh
+      - ./base/files/usr/local/bin/add-debug:/usr/local/bin/add-debug
+      - ./base/files/usr/local/bin/add-forensics:/usr/local/bin/add-forensics
+      - ./base/files/usr/local/bin/clean-tmp:/usr/local/bin/clean-tmp
+      - ./base/files/usr/local/bin/daemonize:/usr/local/bin/daemonize
+      - ./base/files/usr/local/bin/entrypoint:/usr/local/bin/entrypoint
+      - ./base/files/usr/local/bin/envsubst-only-prefix:/usr/local/bin/envsubst-only-prefix
+      - ./base/files/usr/local/bin/healthcheck:/usr/local/bin/healthcheck
+      - ./base/files/usr/local/bin/service:/usr/local/bin/service
       - ./tests:/tests
 
   ci:
     env_file: .env
-    volumes: [/var/run/docker.sock:/var/run/docker.sock]
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./tests:/tests
 
-  qa:
+  az-ci:
     env_file: .env
-    volumes: *volumes
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./az-ci/files/usr/local/bin/cloud-login:/usr/local/bin/cloud-login
+      - ./tests:/tests
 
-  fs:
+  php-base:
     env_file: .env
-    volumes: *volumes
+    volumes: &php-volumes
+      - ./base/files/entrypoint.d/00-override-owner.sh:/entrypoint.d/00-override-owner.sh
+      - ./base/files/usr/local/bin/add-debug:/usr/local/bin/add-debug
+      - ./base/files/usr/local/bin/add-forensics:/usr/local/bin/add-forensics
+      - ./base/files/usr/local/bin/clean-tmp:/usr/local/bin/clean-tmp
+      - ./base/files/usr/local/bin/daemonize:/usr/local/bin/daemonize
+      - ./base/files/usr/local/bin/entrypoint:/usr/local/bin/entrypoint
+      - ./base/files/usr/local/bin/envsubst-only-prefix:/usr/local/bin/envsubst-only-prefix
+      - ./base/files/usr/local/bin/healthcheck:/usr/local/bin/healthcheck
+      - ./base/files/usr/local/bin/service:/usr/local/bin/service
+      - ./php-base/files/entrypoint.d/20-enable-newrelic-agent.sh:/entrypoint.d/20-enable-newrelic-agent.sh
+      - ./php-base/files/etc/init.d/var-dump:/etc/init.d/var-dump
+      - ./php-base/files/etc/nginx/templates:/etc/nginx/templates
+      - ./php-base/files/app:/app
+      - ./tests:/tests
+
+  php-qa:
+    env_file: .env
+    volumes: *php-volumes
+
+  php-fs:
+    env_file: .env
+    volumes: *php-volumes

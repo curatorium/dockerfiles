@@ -1,0 +1,7 @@
+#!/usr/local/bin/steward
+
+az-ci() {
+	key microsoft https://packages.microsoft.com/keys/microsoft.asc
+	src microsoft https://packages.microsoft.com/repos/azure-cli/ $VERSION_CODENAME main
+	apt azure-cli
+}

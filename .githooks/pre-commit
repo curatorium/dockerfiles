@@ -1,22 +1,63 @@
 #!/bin/bash
 # Copyright (c) 2025 Mihai Stancu (https://github.com/curatorium)
 #
-# Unlike the pure-bash siblings these suites run against built images: they pick
-# the host-arch image for the PHPVS/TS in .env, and a missing image just fails
-# the test. The CI matrix covers the other versions and arches.
-set -a; . ./.env; set +a
-export X_ARCH=$(dpkg --print-architecture)
+# Unlike the pure-bash sibling repos, these suites need Docker + built role
+# images, so the hook hard-fails (does NOT skip) when either is missing — a
+# commit that can't be verified must not land.
+set -euo pipefail
 
-bash-test tests/service.test > tests/service.test.md ||
+command -v docker > /dev/null 2>&1 ||
+	{ echo "ERROR: docker is required to run the test suites."; exit 1; }
+command -v bash-test > /dev/null 2>&1 ||
+	{ echo "ERROR: bash-test is required to run the test suites."; exit 1; }
+
+# The root Dockerfile is generated from the per-role <role>/Dockerfile fragments;
+# a stale checkout would build something other than the committed source.
+./generate-dockerfile > /dev/null
+git diff --quiet Dockerfile ||
+	{ echo "WARNING: Dockerfile is stale — run ./generate-dockerfile and stage it."; exit 1; }
+
+# img_for resolves each curatorium/* role image from .env (TS/PHPVS) + host arch.
+. tests/.deps/lib.sh
+
+PHPVS=$(_env PHPVS)
+[[ -n "$PHPVS" ]] ||
+	{ echo "ERROR: PHPVS is not set in .env (needed to select the php-* reports)."; exit 1; }
+
+ROLES=(base ci az-ci php-base php-qa php-fs)
+
+for role in "${ROLES[@]}"; do
+	img=$(img_for "$role")
+	docker image inspect "$img" > /dev/null 2>&1 ||
+		{ echo "ERROR: image $img not built; run the build first."; exit 1; }
+done
+
+# php-* reports are version-specific: each commit refreshes only the PHPVS the
+# developer built (from .env); the CI matrix covers every other version.
+report_for() {
+	case "$1" in
+		php-*) printf 'tests/%s.test.%s.md' "$1" "$PHPVS" ;;
+		*)     printf 'tests/%s.test.md' "$1" ;;
+	esac
+}
+
+for role in "${ROLES[@]}"; do
+	report=$(report_for "$role")
+	bash-test "tests/$role.test" > "$report" ||
+		{ echo "ERROR: $role tests failed ($(img_for "$role"))."; exit 1; }
+done
+
+# service.test runs INSIDE the base image (baked /usr/local/bin/service +
+# bash-test, root, writable /etc/init.d); its report must stay in sync with the
+# code under test.
+docker run --rm -v "$PWD/tests:/tests" \
+	--entrypoint bash "$(img_for base)" -c 'bash-test /tests/service.test' > tests/service.test.md ||
 	{ echo "ERROR: service tests failed."; exit 1; }
-bash-test tests/base.test > "tests/base.test.$PHPVS.md" ||
-	{ echo "ERROR: base tests failed."; exit 1; }
-bash-test tests/ci.test > "tests/ci.test.$PHPVS.md" ||
-	{ echo "ERROR: ci tests failed."; exit 1; }
-bash-test tests/qa.test > "tests/qa.test.$PHPVS.md" ||
-	{ echo "ERROR: qa tests failed."; exit 1; }
-bash-test tests/fs.test > "tests/fs.test.$PHPVS.md" ||
-	{ echo "ERROR: fs tests failed."; exit 1; }
 
-git diff --quiet tests/service.test.md tests/*.test.$PHPVS.md ||
-	{ echo "WARNING: reports are out of date — stage them."; exit 1; }
+for role in "${ROLES[@]}"; do
+	report=$(report_for "$role")
+	git diff --quiet "$report" ||
+		{ echo "WARNING: $report is out of date — stage it."; exit 1; }
+done
+git diff --quiet tests/service.test.md ||
+	{ echo "WARNING: tests/service.test.md is out of date — stage it."; exit 1; }

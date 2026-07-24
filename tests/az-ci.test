@@ -1,0 +1,33 @@
+# shellcheck shell=bash
+# shellcheck source=tests/.deps/lib.sh
+. "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/.deps/lib.sh"
+
+# az-ci = ci plus the Azure CLI and the cloud-login helper.
+: "${IMAGE:=$(img_for az-ci)}"
+
+test:az() { on_path az && runs az; }
+test:cloud-login() { on_path cloud-login; }
+
+output() { cat <<MD
+# az-ci — $IMAGE
+
+## Azure
+
+| Binary | On PATH | Runs |
+|--------|---------|------|
+$(bin_rows az)
+
+## Helper (On PATH)
+
+| Binary | On PATH |
+|--------|---------|
+$(path_rows cloud-login)
+
+## Gate
+
+| Check | Result |
+|-------|--------|
+| \`az\` on PATH and runs | $(t az) |
+| \`cloud-login\` present | $(t cloud-login) |
+MD
+}

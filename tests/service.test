@@ -2,19 +2,12 @@
 # shellcheck disable=SC2016  # single-quote intentional in heredocs
 
 # Service + entrypoint behaviour safety-net.
-# Runs INSIDE the built image (root, php on PATH, /etc/init.d writable).
+# Runs INSIDE the built base image (root, /etc/init.d writable). The stubs are
+# php-free shell scripts so this covers the pure base role, which ships no php.
 # Every assertion is black-box (observable exit codes and side-effects only).
 
-# Run on the host it re-execs itself inside the image (so the caller only needs
-# `bash-test tests/service.test`); $IN_IMAGE marks the in-container pass.
-if [ -z "${IN_IMAGE:-}" ]; then
-	IMAGE="${IMAGE:-curatorium/php-${PHPVS:?}:base-${TS:?}-${X_ARCH:?}}"
-	HERE=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
-	exec docker run --rm -e IN_IMAGE=1 -v "$HERE:/tests" --entrypoint bash-test "$IMAGE" /tests/service.test
-fi
-
-STUB="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/.stub/mirror.php"
-ARGDUMP="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/.stub/argdump.php"
+STUB="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/.stub/mirror.sh"
+ARGDUMP="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/.stub/argdump.sh"
 ENTRYPOINT_D="/entrypoint.d"
 
 # ---------------------------------------------------------------------------
@@ -55,7 +48,7 @@ test:lifecycle:status-not-installed() {
 
 test:lifecycle:status-after-install() {
     svc_clean tsvc
-    service install tsvc php "$STUB" tsvc >/dev/null 2>&1
+    service install tsvc sh "$STUB" tsvc >/dev/null 2>&1
     service status tsvc >/dev/null 2>&1; local rc=$?
     svc_clean tsvc
     assert:status "$rc" 3 "installed-but-stopped status"
@@ -64,7 +57,7 @@ test:lifecycle:status-after-install() {
 test:lifecycle:status-after-start() {
     svc_clean tsvc
     rm -f /tmp/tsvc.out
-    service install tsvc php "$STUB" tsvc >/dev/null 2>&1
+    service install tsvc sh "$STUB" tsvc >/dev/null 2>&1
     service start tsvc >/dev/null 2>&1
     sleep 0.2
     service status tsvc >/dev/null 2>&1; local rc=$?
@@ -77,7 +70,7 @@ test:lifecycle:status-after-start() {
 
 test:lifecycle:status-after-stop() {
     svc_clean tsvc
-    service install tsvc php "$STUB" tsvc >/dev/null 2>&1
+    service install tsvc sh "$STUB" tsvc >/dev/null 2>&1
     service start tsvc >/dev/null 2>&1
     sleep 0.2
     service stop tsvc >/dev/null 2>&1
@@ -88,7 +81,7 @@ test:lifecycle:status-after-stop() {
 
 test:lifecycle:status-after-uninstall() {
     svc_clean tsvc
-    service install tsvc php "$STUB" tsvc >/dev/null 2>&1
+    service install tsvc sh "$STUB" tsvc >/dev/null 2>&1
     service uninstall tsvc >/dev/null 2>&1
     service status tsvc >/dev/null 2>&1; local rc=$?
     assert:status "$rc" 9 "uninstalled status"
@@ -96,7 +89,7 @@ test:lifecycle:status-after-uninstall() {
 
 test:lifecycle:idempotent-start() {
     svc_clean tsvc
-    service install tsvc php "$STUB" tsvc >/dev/null 2>&1
+    service install tsvc sh "$STUB" tsvc >/dev/null 2>&1
     service start tsvc >/dev/null 2>&1
     sleep 0.2
     service start tsvc >/dev/null 2>&1; local rc=$?
@@ -106,7 +99,7 @@ test:lifecycle:idempotent-start() {
 
 test:lifecycle:idempotent-stop() {
     svc_clean tsvc
-    service install tsvc php "$STUB" tsvc >/dev/null 2>&1
+    service install tsvc sh "$STUB" tsvc >/dev/null 2>&1
     # not started → already stopped
     service stop tsvc >/dev/null 2>&1; local rc=$?
     svc_clean tsvc
@@ -116,7 +109,7 @@ test:lifecycle:idempotent-stop() {
 test:lifecycle:restart-reruns-command() {
     svc_clean tsvc
     rm -f /tmp/tsvc.out
-    service install tsvc php "$STUB" tsvc >/dev/null 2>&1
+    service install tsvc sh "$STUB" tsvc >/dev/null 2>&1
     service start tsvc >/dev/null 2>&1
     sleep 0.2
     local before
@@ -136,7 +129,7 @@ test:lifecycle:passes-glob-arg-literally() {
     # The wrapper expands args in ITS OWN cwd, so populate the caller's cwd with a
     # canary: a mishandled '*' would glob to it instead of reaching the command.
     local dir; dir=$(mktemp -d); touch "$dir/glob-canary"
-    ( cd "$dir" && service install tglob php "$ARGDUMP" tglob '*' >/dev/null 2>&1 \
+    ( cd "$dir" && service install tglob sh "$ARGDUMP" tglob '*' >/dev/null 2>&1 \
                 && service start tglob >/dev/null 2>&1 )
     sleep 0.3
     local got; got=$(cat /tmp/tglob.args 2>/dev/null)
@@ -151,7 +144,7 @@ test:lifecycle:passes-glob-arg-literally() {
 
 test:monitor:starts-enabled-service() {
     svc_clean tmon1
-    service install tmon1 php "$STUB" tmon1 >/dev/null 2>&1
+    service install tmon1 sh "$STUB" tmon1 >/dev/null 2>&1
     service enable  tmon1 >/dev/null 2>&1
     setsid env SERVICE_MONITOR_SLEEP=0.2 service monitor >/dev/null 2>&1 </dev/null &
     local mon=$!
@@ -164,15 +157,13 @@ test:monitor:starts-enabled-service() {
 
 test:monitor:restarts-killed-service() {
     svc_clean tmon2
-    service install tmon2 php "$STUB" tmon2 >/dev/null 2>&1
+    service install tmon2 sh "$STUB" tmon2 >/dev/null 2>&1
     service enable  tmon2 >/dev/null 2>&1
     setsid env SERVICE_MONITOR_SLEEP=0.2 service monitor >/dev/null 2>&1 </dev/null &
     local mon=$!
     wait_status tmon2 0
-    # Kill the daemon process by matching its unique stub argument
-    local dpid
-    dpid=$(pgrep -f "mirror.php tmon2" 2>/dev/null | head -1)
-    if [[ -n "$dpid" ]]; then kill -9 "$dpid" 2>/dev/null || true; fi
+    # Crash the daemon via the manager's own pidfile (base ships no pgrep/ps).
+    kill -9 "$(cat /run/service-tmon2.pid 2>/dev/null)" 2>/dev/null || true
     wait_status tmon2 0 30
     local rc=$?
     kill -- -"$mon" 2>/dev/null; wait "$mon" 2>/dev/null || true
@@ -182,16 +173,16 @@ test:monitor:restarts-killed-service() {
 
 test:monitor:no-restart-disabled-service() {
     svc_clean tmon3
-    service install tmon3 php "$STUB" tmon3 >/dev/null 2>&1
+    service install tmon3 sh "$STUB" tmon3 >/dev/null 2>&1
     service enable  tmon3 >/dev/null 2>&1
     setsid env SERVICE_MONITOR_SLEEP=0.2 service monitor >/dev/null 2>&1 </dev/null &
     local mon=$!
     wait_status tmon3 0
-    # Disable then kill
+    # The monitor must re-read services.list (drop tmon3) before the crash,
+    # else its in-flight tick resurrects it and the kill races a restart.
     service disable tmon3 >/dev/null 2>&1
-    local dpid
-    dpid=$(pgrep -f "mirror.php tmon3" 2>/dev/null | head -1)
-    if [[ -n "$dpid" ]]; then kill -9 "$dpid" 2>/dev/null || true; fi
+    sleep 0.5
+    kill -9 "$(cat /run/service-tmon3.pid 2>/dev/null)" 2>/dev/null || true
     sleep 1
     service status tmon3 >/dev/null 2>&1; local rc=$?
     kill -- -"$mon" 2>/dev/null; wait "$mon" 2>/dev/null || true
@@ -241,7 +232,7 @@ test:entrypoint:oneshot-command() {
 test:entrypoint:enabled-services-monitored() {
     local svc="tep$$"
     svc_clean "$svc"
-    service install "$svc" php "$STUB" "$svc" >/dev/null 2>&1
+    service install "$svc" sh "$STUB" "$svc" >/dev/null 2>&1
     # entrypoint forks a `service monitor` child; run it in its own session and
     # detached from our stdout so bash-test's output capture can't block on the
     # child's inherited pipe, then tear down the whole process group.

@@ -1,29 +1,42 @@
 services:
   base:
     build:
-      args: &build-args {NODEVS: $NODEVS, PHPVS: $PHPVS}
-      target: php-base
-    image: curatorium/php-$PHPVS:base-$TS-$X_ARCH
+      target: base
+    image: curatorium/base:$TS-$X_ARCH
 
   ci:
     build:
-      args: *build-args
+      args: {NODEVS: $NODEVS}
       target: ci
     depends_on: [base]
-    image: curatorium/php-$PHPVS:ci-$TS-$X_ARCH
+    image: curatorium/ci:$TS-$X_ARCH
 
-  qa:
+  az-ci:
     build:
-      args: *build-args
-      target: qa
-    command: [bash]
+      args: {NODEVS: $NODEVS}
+      target: az-ci
+    depends_on: [ci]
+    image: curatorium/az-ci:$TS-$X_ARCH
+
+  php-base:
+    build:
+      args: {PHPVS: $PHPVS}
+      target: php-base
     depends_on: [base]
+    image: curatorium/php-$PHPVS:base-$TS-$X_ARCH
+
+  php-qa:
+    build:
+      args: {PHPVS: $PHPVS}
+      target: php-qa
+    command: [bash]
+    depends_on: [php-base]
     image: curatorium/php-$PHPVS:qa-$TS-$X_ARCH
 
-  fs:
+  php-fs:
     build:
-      args: *build-args
-      target: fs
+      args: {NODEVS: $NODEVS, PHPVS: $PHPVS}
+      target: php-fs
     command: [bash]
-    depends_on: [qa]
+    depends_on: [php-qa]
     image: curatorium/php-$PHPVS:fs-$TS-$X_ARCH
