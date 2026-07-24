@@ -1,11 +1,8 @@
 name: Scout CVE scan
 
-# Docker Scout is free for analysing images: the CLI/action carries no cost and,
-# for an OSI-licensed public repo, GitHub code scanning (the Security tab) is free
-# too. Dispatched by hand against the PUBLISHED images, so newly-disclosed CVEs
-# in already-built images can be checked without a rebuild.
+# Scans the published images, so CVEs disclosed since a build surface without a rebuild.
 on:
-  workflow_dispatch: ~ # manual-only until images are first published
+  workflow_dispatch: ~
 
 permissions:
   contents: read
