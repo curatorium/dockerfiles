@@ -41,8 +41,6 @@ jobs:
     permissions: {contents: read, id-token: write, attestations: write}
     strategy:
       fail-fast: false
-      # Docker Hub 429s the manifest HEAD when the whole matrix pushes at once.
-      max-parallel: 8
       matrix:
         PHPVS: ${{ fromJSON(needs.version.outputs.phpvs) }}
         ROLE: [base, ci, qa, fs]
@@ -110,7 +108,6 @@ jobs:
     permissions: {contents: read, id-token: write, attestations: write}
     strategy:
       fail-fast: false
-      max-parallel: 4
       matrix:
         PHPVS: ${{ fromJSON(needs.version.outputs.phpvs) }}
         ROLE: [base, ci, qa, fs]
