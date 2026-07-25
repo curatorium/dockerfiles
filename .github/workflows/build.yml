@@ -31,7 +31,7 @@ jobs:
       - id: v
         run: |
           echo "ts=$(date +%y.%m)" >> "$GITHUB_OUTPUT"
-          echo "nodevs=$(sed -n 's/^NODEVS=//p' .env | tr -d '[:space:]')" >> "$GITHUB_OUTPUT"
+          echo "nodevs=25" >> "$GITHUB_OUTPUT"
 
           FULL='[
             {"php":"8.0","node":"18"},
@@ -203,7 +203,7 @@ jobs:
           sudo chmod +x /usr/local/bin/bash-import /usr/local/bin/bash-test
 
       - name: Test
-        run: IMAGE="$REPO@${{ steps.push.outputs.digest }}" bash-test tests/php-${{ matrix.role }}.test
+        run: PHPVS=${{ matrix.entry.php }} NODEVS=${{ matrix.entry.node }} IMAGE="$REPO@${{ steps.push.outputs.digest }}" bash-test tests/php-${{ matrix.role }}.test
 
       - uses: actions/attest-build-provenance@v2
         with:
