@@ -5,7 +5,7 @@ php-base() {
 	src php https://packages.sury.org/php/ bookworm main
 
 	key newrelic https://download.newrelic.com/548C16BF.gpg
-	src newrelic http://apt.newrelic.com/debian/ newrelic non-free
+	src newrelic https://apt.newrelic.com/debian/ newrelic non-free
 
 	apt ghostscript
 	apt gifsicle
