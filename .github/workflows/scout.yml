@@ -2,6 +2,8 @@ name: Scout CVE scan
 
 # Scans the published images, so CVEs disclosed since a build surface without a rebuild.
 on:
+  schedule:
+    - cron: '0 5 * * 1'
   workflow_dispatch: ~
 
 permissions:
