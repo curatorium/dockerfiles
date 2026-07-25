@@ -1,7 +1,10 @@
 {
     "config": {
         "bin-dir": "/usr/local/bin",
-        "allow-plugins": true
+        "allow-plugins": true,
+        "audit": {
+            "ignore": ["laravel/framework", "orchestra/testbench"]
+        }
     },
     "require": {
         "nunomaduro/phpinsights": "*"

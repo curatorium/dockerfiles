@@ -1,6 +1,9 @@
 {
     "config": {
-        "bin-dir": "/usr/local/bin"
+        "bin-dir": "/usr/local/bin",
+        "audit": {
+            "ignore": ["laravel/framework", "orchestra/testbench"]
+        }
     },
     "require": {
         "vimeo/psalm": "*",
