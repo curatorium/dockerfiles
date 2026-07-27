@@ -16,15 +16,18 @@ ENV DEBIAN_FRONTEND=noninteractive \
     TERM=linux \
     TZ=UTC
 
-ADD https://github.com/curatorium/steward/releases/latest/download/steward /usr/local/bin/steward
+ADD https://github.com/curatorium/steward/releases/download/v1.0.0-alpha.7/steward /usr/local/bin/steward
+RUN chmod +x /usr/local/bin/steward
+
 COPY base/files /
+
 COPY base/Stewardfile /tmp/Stewardfile
-RUN chmod +x /usr/local/bin/steward && steward -t base /tmp/Stewardfile && clean-tmp
+RUN steward -t base /tmp/Stewardfile && clean-tmp
 
 ENTRYPOINT ["tini", "--", "entrypoint"]
+HEALTHCHECK CMD ["healthcheck"]
 STOPSIGNAL SIGTERM
 WORKDIR /app
-HEALTHCHECK CMD ["healthcheck"]
 
 FROM base AS ci
 LABEL org.opencontainers.image.authors="Curatorium"
@@ -34,10 +37,10 @@ LABEL org.opencontainers.image.source="https://github.com/curatorium/dockerfiles
 LABEL org.opencontainers.image.url="https://hub.docker.com/u/curatorium"
 
 ARG NODEVS
-ENV NODEVS=${NODEVS} \
-    ENABLED_SERVICES=""
+ENV NODEVS=${NODEVS} ENABLED_SERVICES=""
 
 COPY ci/files /
+
 COPY ci/Stewardfile /tmp/Stewardfile
 RUN steward -t ci /tmp/Stewardfile && clean-tmp
 

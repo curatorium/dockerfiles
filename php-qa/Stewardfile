@@ -10,8 +10,8 @@ php-qa() {
 
 	bin local-php-security-checker https://github.com/fabpot/local-php-security-checker/releases/download/v2.0.6/local-php-security-checker_2.0.6_linux_$ARCH
 
-	on-amd64 bin snyk https://downloads.snyk.io/cli/stable/snyk-linux
-	on-arm64 bin snyk https://downloads.snyk.io/cli/stable/snyk-linux-arm64
+	on-amd64 bin snyk https://downloads.snyk.io/cli/v1.1306.1/snyk-linux
+	on-arm64 bin snyk https://downloads.snyk.io/cli/v1.1306.1/snyk-linux-arm64
 
 	on-amd64 tar gitleaks gitleaks https://github.com/gitleaks/gitleaks/releases/download/v8.21.2/gitleaks_8.21.2_linux_x64.tar.gz
 	on-arm64 tar gitleaks gitleaks https://github.com/gitleaks/gitleaks/releases/download/v8.21.2/gitleaks_8.21.2_linux_arm64.tar.gz

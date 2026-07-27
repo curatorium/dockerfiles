@@ -18,7 +18,7 @@ ci() {
 	apt zip
 
 	deb https://github.com/shopify/ejson/releases/download/v1.5.2/ejson_1.5.2_linux_$ARCH.deb
-	deb https://github.com/skeema/skeema/releases/latest/download/skeema_$ARCH.deb
+	deb https://github.com/skeema/skeema/releases/download/v1.14.1/skeema_$ARCH.deb
 	on-amd64 deb https://github.com/harelba/q/releases/download/v3.1.6/q-text-as-data-3.1.6-1.x86_64.deb
 	bin yq https://github.com/mikefarah/yq/releases/download/v4.35.2/yq_linux_$ARCH
 	zip pup pup https://github.com/ericchiang/pup/releases/download/v0.4.0/pup_v0.4.0_linux_$ARCH.zip
@@ -30,7 +30,7 @@ ci() {
 	apt docker-compose-plugin
 	apt docker-buildx-plugin
 
-	tar kubectl-krew krew-linux_$ARCH https://github.com/kubernetes-sigs/krew/releases/latest/download/krew-linux_$ARCH.tar.gz
+	tar kubectl-krew krew-linux_$ARCH https://github.com/kubernetes-sigs/krew/releases/download/v0.5.0/krew-linux_$ARCH.tar.gz
 
 	key nodesource https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key
 	src nodesource https://deb.nodesource.com/node_$NODEVS.x nodistro main
@@ -38,13 +38,11 @@ ci() {
 	npm yarn
 
 	defer <<-SH
-		KUBECTLVS=\$(curl -1fsSL https://dl.k8s.io/release/stable.txt)
-		curl -1fsSL -o /usr/local/bin/kubectl "https://dl.k8s.io/release/\$KUBECTLVS/bin/linux/$ARCH/kubectl"
+		curl -1fsSL -o /usr/local/bin/kubectl "https://dl.k8s.io/release/v1.36.3/bin/linux/$ARCH/kubectl"
 		chmod +x /usr/local/bin/kubectl
 	SH
 	defer <<-SH
-		KUBELOGINVS=\$(curl -1fsSL https://api.github.com/repos/Azure/kubelogin/releases/latest | jq -r .tag_name)
-		curl -1fsSL -o /tmp/kubelogin.zip "https://github.com/Azure/kubelogin/releases/download/\$KUBELOGINVS/kubelogin-linux-$ARCH.zip"
+		curl -1fsSL -o /tmp/kubelogin.zip "https://github.com/Azure/kubelogin/releases/download/v0.2.19/kubelogin-linux-$ARCH.zip"
 		unzip -j /tmp/kubelogin.zip "bin/linux_$ARCH/kubelogin" -d /usr/local/bin/
 		chmod +x /usr/local/bin/kubelogin
 		rm /tmp/kubelogin.zip

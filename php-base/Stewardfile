@@ -58,7 +58,7 @@ php-base() {
 	apt --temp php-pear
 	defer <<<"pecl channel-update pecl.php.net; pecl install timezonedb; phpenmod timezonedb"
 
-	ext https://getcomposer.org/installer php -- --2 --install-dir=/usr/local/bin --filename=composer
+	ext https://getcomposer.org/installer php -- --version=2.10.2 --install-dir=/usr/local/bin --filename=composer
 
 	apt nginx
 

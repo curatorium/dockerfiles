@@ -6,7 +6,8 @@ ENV DEBIAN_FRONTEND=noninteractive \
     TERM=linux \
     TZ=UTC
 
-ADD https://github.com/curatorium/steward/releases/latest/download/steward /usr/local/bin/steward
+ADD https://github.com/curatorium/steward/releases/download/v1.0.0-alpha.7/steward /usr/local/bin/steward
+
 COPY files /
 COPY Stewardfile /tmp/Stewardfile
 RUN chmod +x /usr/local/bin/steward && steward -t base /tmp/Stewardfile && clean-tmp
