@@ -1,9 +1,10 @@
 FROM curatorium/base
 
 ARG NODEVS
-ENV NODEVS=${NODEVS} \
-    ENABLED_SERVICES=""
+ENV NODEVS=${NODEVS}
+ENV ENABLED_SERVICES=""
 
 COPY files /
+
 COPY Stewardfile /tmp/Stewardfile
-RUN steward -t ci /tmp/Stewardfile && clean-tmp
+RUN steward /tmp/Stewardfile && clean-tmp

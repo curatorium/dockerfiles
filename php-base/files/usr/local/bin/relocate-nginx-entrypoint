@@ -1,0 +1,12 @@
+#!/bin/bash -e
+
+# nginx ships its entrypoint scripts numbered 10-15; prefix them so they sort
+# after base's own entrypoint.d and keep nginx's relative ordering.
+for f in /tmp/nginx-entrypoint/*; do
+	mv "$f" "/entrypoint.d/10-nginx-$(basename "$f")"
+done
+
+# 15-local-resolvers ships as .envsh but must run, not be sourced.
+mv /entrypoint.d/10-nginx-15-local-resolvers.envsh /entrypoint.d/10-nginx-15-local-resolvers.sh
+
+rm -rf /tmp/nginx-entrypoint

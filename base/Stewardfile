@@ -1,20 +1,18 @@
 #!/usr/local/bin/steward
 
-base() {
-	apt cron
-	apt gettext-base
-	apt gnupg
-	apt jq
-	apt less
-	apt locales
-	apt nano
-	apt patch
-	apt sudo
-	apt tini
-	apt tzdata
-	apt unzip
+apt cron
+apt gettext-base
+apt gnupg
+apt jq
+apt less
+apt locales
+apt nano
+apt patch
+apt sudo
+apt tini
+apt tzdata
+apt unzip
 
-	bin wait-until https://raw.githubusercontent.com/nickjj/wait-until/v0.3.0/wait-until
-	bin bash-import https://github.com/curatorium/bash-import/releases/download/v1.0.0-alpha.5/bash-import
-	bin bash-test https://github.com/curatorium/bash-import/releases/download/v1.0.0-alpha.5/bash-test
-}
+bin wait-until https://raw.githubusercontent.com/nickjj/wait-until/v0.3.0/wait-until
+bin bash-import https://github.com/curatorium/bash-import/releases/download/v1.0.0-alpha.5/bash-import
+bin bash-test https://github.com/curatorium/bash-import/releases/download/v1.0.0-alpha.5/bash-test

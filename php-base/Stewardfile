@@ -1,81 +1,76 @@
 #!/usr/local/bin/steward
 
-php-base() {
-	key php https://packages.sury.org/php/apt.gpg
-	src php https://packages.sury.org/php/ bookworm main
+key php https://packages.sury.org/php/apt.gpg
+src php https://packages.sury.org/php/ bookworm main
 
-	key newrelic https://download.newrelic.com/548C16BF.gpg
-	src newrelic https://apt.newrelic.com/debian/ newrelic non-free
+apt php$PHPVS-amqp
+apt php$PHPVS-apcu
+apt php$PHPVS-bcmath
+apt php$PHPVS-cli
+apt php$PHPVS-common
+apt php$PHPVS-curl
+apt php$PHPVS-fpm
+apt php$PHPVS-gd
+apt php$PHPVS-http
+apt php$PHPVS-igbinary
+apt php$PHPVS-imagick
+apt php$PHPVS-intl
+apt php$PHPVS-mbstring
+apt php$PHPVS-mongodb
+apt php$PHPVS-msgpack
+apt php$PHPVS-mysql
+apt php$PHPVS-odbc
+apt php$PHPVS-pgsql
+apt php$PHPVS-protobuf
+apt php$PHPVS-raphf
+apt php$PHPVS-readline
+apt php$PHPVS-redis
+apt php$PHPVS-soap
+apt php$PHPVS-sqlite3
+apt php$PHPVS-ssh2
+apt php$PHPVS-stomp
+apt php$PHPVS-xml
+apt php$PHPVS-xsl
+apt php$PHPVS-yaml
+apt php$PHPVS-zip
 
-	apt ghostscript
-	apt gifsicle
-	apt imagemagick
-	apt jpegoptim
-	apt optipng
-	apt pngquant
+apt --try php$PHPVS-grpc
+apt --try php$PHPVS-memcached
+apt --try php$PHPVS-opcache
+apt --try php$PHPVS-zmq
 
-	apt php$PHPVS-amqp
-	apt php$PHPVS-apcu
-	apt php$PHPVS-bcmath
-	apt php$PHPVS-cli
-	apt php$PHPVS-common
-	apt php$PHPVS-curl
-	apt php$PHPVS-fpm
-	apt php$PHPVS-gd
-	apt php$PHPVS-http
-	apt php$PHPVS-igbinary
-	apt php$PHPVS-imagick
-	apt php$PHPVS-intl
-	apt php$PHPVS-mbstring
-	apt php$PHPVS-mongodb
-	apt php$PHPVS-msgpack
-	apt php$PHPVS-mysql
-	apt php$PHPVS-odbc
-	apt php$PHPVS-pgsql
-	apt php$PHPVS-protobuf
-	apt php$PHPVS-raphf
-	apt php$PHPVS-readline
-	apt php$PHPVS-redis
-	apt php$PHPVS-soap
-	apt php$PHPVS-sqlite3
-	apt php$PHPVS-ssh2
-	apt php$PHPVS-stomp
-	apt php$PHPVS-xml
-	apt php$PHPVS-xsl
-	apt php$PHPVS-yaml
-	apt php$PHPVS-zip
+apt --temp make
+apt --temp php$PHPVS-dev
+apt --temp php-pear
+defer <<<"pecl channel-update pecl.php.net; pecl install timezonedb; phpenmod timezonedb"
 
-	apt --try php$PHPVS-grpc
-	apt --try php$PHPVS-memcached
-	apt --try php$PHPVS-opcache
-	apt --try php$PHPVS-zmq
+ext https://getcomposer.org/installer php -- --version=2.10.2 --install-dir=/usr/local/bin --filename=composer
 
-	on-amd64 apt newrelic-php5
-	defer <<<"phpdismod newrelic"
+# newrelic
+key newrelic https://download.newrelic.com/548C16BF.gpg
+src newrelic https://apt.newrelic.com/debian/ newrelic non-free
+on-amd64 apt newrelic-php5
+defer <<<"phpdismod newrelic"
 
-	apt --temp make
-	apt --temp php$PHPVS-dev
-	apt --temp php-pear
-	defer <<<"pecl channel-update pecl.php.net; pecl install timezonedb; phpenmod timezonedb"
+# image-optimisers
+apt ghostscript
+apt gifsicle
+apt imagemagick
+apt jpegoptim
+apt optipng
+apt pngquant
+defer <<<"sed -i '/<policy domain="coder" rights="none" pattern="PDF" \/>/d' /etc/ImageMagick-6/policy.xml"
 
-	ext https://getcomposer.org/installer php -- --version=2.10.2 --install-dir=/usr/local/bin --filename=composer
-
-	apt nginx
-
-	defer <<-SH
-		rm -f /etc/nginx/sites-enabled/default
-		sed -i 's/user  nginx;/user www-data;/' /etc/nginx/nginx.conf
-		ln -sfn /proc/1/fd/1 /var/log/nginx/access.log
-		ln -sfn /proc/1/fd/2 /var/log/nginx/error.log
-	SH
-
-	defer <<-SH
-		sed -i '/<policy domain="coder" rights="none" pattern="PDF" \/>/d' /etc/ImageMagick-6/policy.xml
-	SH
-
-	defer <<-SH
-		ln -sfn /etc/init.d/php?.?-fpm /etc/init.d/php-fpm
-		ln -sfn /proc/1/fd/2 /var/log/php$PHPVS-fpm.log
-		ln -sfn /etc/init.d/newrelic-daemon /etc/init.d/newrelic
-	SH
-}
+# nginx
+apt nginx
+defer <<-SH
+	rm -f /etc/nginx/sites-enabled/default
+	sed -i 's/user  nginx;/user www-data;/' /etc/nginx/nginx.conf
+	ln -sfn /proc/1/fd/1 /var/log/nginx/access.log
+	ln -sfn /proc/1/fd/2 /var/log/nginx/error.log
+SH
+defer <<-SH
+	ln -sfn /etc/init.d/php?.?-fpm /etc/init.d/php-fpm
+	ln -sfn /proc/1/fd/2 /var/log/php$PHPVS-fpm.log
+	ln -sfn /etc/init.d/newrelic-daemon /etc/init.d/newrelic
+SH

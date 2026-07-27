@@ -17,13 +17,15 @@ services:
     env_file: .env
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - ./ci/files/usr/local/bin/cloud-login:/usr/local/bin/cloud-login
       - ./tests:/tests
 
   az-ci:
     env_file: .env
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - ./az-ci/files/usr/local/bin/cloud-login:/usr/local/bin/cloud-login
+      - ./ci/files/usr/local/bin/cloud-login:/usr/local/bin/cloud-login
+      - ./az-ci/files/usr/local/bin/cloud-login-az:/usr/local/bin/cloud-login-az
       - ./tests:/tests
 
   php-base:

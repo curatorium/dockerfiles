@@ -1,52 +1,52 @@
 #!/usr/local/bin/steward
 
-ci() {
-	apt 7zip
-	apt bzip2
-	apt git
-	apt gron
-	apt httpie
-	apt libfcgi0ldbl
-	apt libmemcached-tools
-	apt mariadb-client
-	apt openssh-client
-	apt python3-html2text
-	apt redis-tools
-	apt tar
-	apt unzip
-	apt xz-utils
-	apt zip
+apt 7zip
+apt bzip2
+apt git
+apt gron
+apt httpie
+apt libfcgi0ldbl
+apt libmemcached-tools
+apt mariadb-client
+apt openssh-client
+apt python3-html2text
+apt redis-tools
+apt tar
+apt unzip
+apt xz-utils
+apt zip
 
-	deb https://github.com/shopify/ejson/releases/download/v1.5.2/ejson_1.5.2_linux_$ARCH.deb
-	deb https://github.com/skeema/skeema/releases/download/v1.14.1/skeema_$ARCH.deb
-	on-amd64 deb https://github.com/harelba/q/releases/download/v3.1.6/q-text-as-data-3.1.6-1.x86_64.deb
-	bin yq https://github.com/mikefarah/yq/releases/download/v4.35.2/yq_linux_$ARCH
-	zip pup pup https://github.com/ericchiang/pup/releases/download/v0.4.0/pup_v0.4.0_linux_$ARCH.zip
-	ext https://download.newrelic.com/install/newrelic-cli/scripts/install.sh bash
+deb https://github.com/shopify/ejson/releases/download/v1.5.2/ejson_1.5.2_linux_$ARCH.deb
+deb https://github.com/skeema/skeema/releases/download/v1.14.1/skeema_$ARCH.deb
+on-amd64 deb https://github.com/harelba/q/releases/download/v3.1.6/q-text-as-data-3.1.6-1.x86_64.deb
+bin yq https://github.com/mikefarah/yq/releases/download/v4.35.2/yq_linux_$ARCH
+zip pup pup https://github.com/ericchiang/pup/releases/download/v0.4.0/pup_v0.4.0_linux_$ARCH.zip
+ext https://download.newrelic.com/install/newrelic-cli/scripts/install.sh bash
 
-	key docker https://download.docker.com/linux/ubuntu/gpg
-	src docker https://download.docker.com/linux/debian $VERSION_CODENAME stable
-	apt docker-ce-cli
-	apt docker-compose-plugin
-	apt docker-buildx-plugin
+# docker
+key docker https://download.docker.com/linux/ubuntu/gpg
+src docker https://download.docker.com/linux/debian $VERSION_CODENAME stable
+apt docker-ce-cli
+apt docker-compose-plugin
+apt docker-buildx-plugin
 
-	tar kubectl-krew krew-linux_$ARCH https://github.com/kubernetes-sigs/krew/releases/download/v0.5.0/krew-linux_$ARCH.tar.gz
+# kubernetes
+tar kubectl-krew krew-linux_$ARCH https://github.com/kubernetes-sigs/krew/releases/download/v0.5.0/krew-linux_$ARCH.tar.gz
+defer <<-SH
+	curl -1fsSL -o /usr/local/bin/kubectl "https://dl.k8s.io/release/v1.36.3/bin/linux/$ARCH/kubectl"
+	chmod +x /usr/local/bin/kubectl
+SH
+defer <<-SH
+	curl -1fsSL -o /tmp/kubelogin.zip "https://github.com/Azure/kubelogin/releases/download/v0.2.19/kubelogin-linux-$ARCH.zip"
+	unzip -o -j /tmp/kubelogin.zip "bin/linux_$ARCH/kubelogin" -d /usr/local/bin/
+	chmod +x /usr/local/bin/kubelogin
+	rm /tmp/kubelogin.zip
+SH
+defer <<<"kubectl-krew install grep exec-cronjob krew slice split-yaml sort-manifests"
 
-	key nodesource https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key
-	src nodesource https://deb.nodesource.com/node_$NODEVS.x nodistro main
-	apt nodejs
-	npm yarn
-
-	defer <<-SH
-		curl -1fsSL -o /usr/local/bin/kubectl "https://dl.k8s.io/release/v1.36.3/bin/linux/$ARCH/kubectl"
-		chmod +x /usr/local/bin/kubectl
-	SH
-	defer <<-SH
-		curl -1fsSL -o /tmp/kubelogin.zip "https://github.com/Azure/kubelogin/releases/download/v0.2.19/kubelogin-linux-$ARCH.zip"
-		unzip -j /tmp/kubelogin.zip "bin/linux_$ARCH/kubelogin" -d /usr/local/bin/
-		chmod +x /usr/local/bin/kubelogin
-		rm /tmp/kubelogin.zip
-	SH
-	defer <<<"kubectl-krew install grep exec-cronjob krew slice split-yaml sort-manifests"
-	defer <<<"npm config --global set cache /var/cache/npm"
-}
+# node
+key nodesource https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key
+src nodesource https://deb.nodesource.com/node_$NODEVS.x nodistro main
+apt nodejs
+npm yarn
+defer <<<"npm config --global set cache /var/cache/npm"

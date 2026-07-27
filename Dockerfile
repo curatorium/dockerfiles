@@ -10,11 +10,11 @@ LABEL org.opencontainers.image.licenses="MIT"
 LABEL org.opencontainers.image.source="https://github.com/curatorium/dockerfiles"
 LABEL org.opencontainers.image.url="https://hub.docker.com/u/curatorium"
 
-ENV DEBIAN_FRONTEND=noninteractive \
-    LANG=en_US.UTF-8 \
-    LC_ALL=C.UTF-8 \
-    TERM=linux \
-    TZ=UTC
+ENV DEBIAN_FRONTEND=noninteractive
+ENV LANG=en_US.UTF-8
+ENV LC_ALL=C.UTF-8
+ENV TERM=linux
+ENV TZ=UTC
 
 ADD https://github.com/curatorium/steward/releases/download/v1.0.0-alpha.7/steward /usr/local/bin/steward
 RUN chmod +x /usr/local/bin/steward
@@ -22,7 +22,7 @@ RUN chmod +x /usr/local/bin/steward
 COPY base/files /
 
 COPY base/Stewardfile /tmp/Stewardfile
-RUN steward -t base /tmp/Stewardfile && clean-tmp
+RUN steward /tmp/Stewardfile && clean-tmp
 
 ENTRYPOINT ["tini", "--", "entrypoint"]
 HEALTHCHECK CMD ["healthcheck"]
@@ -37,12 +37,13 @@ LABEL org.opencontainers.image.source="https://github.com/curatorium/dockerfiles
 LABEL org.opencontainers.image.url="https://hub.docker.com/u/curatorium"
 
 ARG NODEVS
-ENV NODEVS=${NODEVS} ENABLED_SERVICES=""
+ENV NODEVS=${NODEVS}
+ENV ENABLED_SERVICES=""
 
 COPY ci/files /
 
 COPY ci/Stewardfile /tmp/Stewardfile
-RUN steward -t ci /tmp/Stewardfile && clean-tmp
+RUN steward /tmp/Stewardfile && clean-tmp
 
 FROM ci AS az-ci
 LABEL org.opencontainers.image.authors="Curatorium"
@@ -54,8 +55,9 @@ LABEL org.opencontainers.image.url="https://hub.docker.com/u/curatorium"
 ENV AZURE_CONFIG_DIR=/etc/azure/
 
 COPY az-ci/files /
+
 COPY az-ci/Stewardfile /tmp/Stewardfile
-RUN steward -t az-ci /tmp/Stewardfile && clean-tmp
+RUN steward /tmp/Stewardfile && clean-tmp
 
 FROM base AS php-base
 LABEL org.opencontainers.image.authors="Curatorium"
@@ -65,20 +67,19 @@ LABEL org.opencontainers.image.source="https://github.com/curatorium/dockerfiles
 LABEL org.opencontainers.image.url="https://hub.docker.com/u/curatorium"
 
 ARG PHPVS
-ENV PHPVS=${PHPVS} \
-    COMPOSER_ALLOW_SUPERUSER=1 \
-    NGINX_ENVSUBST_TEMPLATE_SUFFIX=.tpl \
-    ENABLED_SERVICES="php-fpm nginx" \
-    VAR_DUMPER_FORMAT=server
+ENV PHPVS=${PHPVS}
+ENV COMPOSER_ALLOW_SUPERUSER=1
+ENV NGINX_ENVSUBST_TEMPLATE_SUFFIX=.tpl
+ENV ENABLED_SERVICES="php-fpm nginx"
+ENV VAR_DUMPER_FORMAT=server
 
-COPY --from=nginx:bookworm /docker-entrypoint.d/ /tmp/nginx-entrypoint/
 COPY php-base/files /
+COPY --from=nginx:bookworm /docker-entrypoint.d/ /tmp/nginx-entrypoint/
 COPY php-base/mods-available/ /etc/php/${PHPVS}/mods-available/
+
 COPY php-base/Stewardfile /tmp/Stewardfile
-RUN steward -t php-base /tmp/Stewardfile \
- && for f in /tmp/nginx-entrypoint/*; do mv "$f" "/entrypoint.d/10-nginx-$(basename "$f")"; done \
- && mv /entrypoint.d/10-nginx-15-local-resolvers.envsh /entrypoint.d/10-nginx-15-local-resolvers.sh \
- && clean-tmp && rm -rf /tmp/nginx-entrypoint
+
+RUN steward /tmp/Stewardfile && relocate-nginx-entrypoint && clean-tmp
 
 EXPOSE 80 443 9000
 
@@ -90,13 +91,13 @@ LABEL org.opencontainers.image.source="https://github.com/curatorium/dockerfiles
 LABEL org.opencontainers.image.url="https://hub.docker.com/u/curatorium"
 
 ARG PHPVS
-ENV PHPVS=${PHPVS} \
-    ENABLED_SERVICES=""
+ENV PHPVS=${PHPVS}
+ENV ENABLED_SERVICES=""
 
 COPY php-qa/files /
 COPY php-qa/mods-available/ /etc/php/${PHPVS}/mods-available/
 COPY php-qa/Stewardfile /tmp/Stewardfile
-RUN steward -t php-qa /tmp/Stewardfile && clean-tmp
+RUN steward /tmp/Stewardfile && clean-tmp
 
 FROM php-qa AS php-fs
 LABEL org.opencontainers.image.authors="Curatorium"
@@ -106,8 +107,8 @@ LABEL org.opencontainers.image.source="https://github.com/curatorium/dockerfiles
 LABEL org.opencontainers.image.url="https://hub.docker.com/u/curatorium"
 
 ARG NODEVS
-ENV NODEVS=${NODEVS} \
-    ENABLED_SERVICES=""
+ENV NODEVS=${NODEVS}
+ENV ENABLED_SERVICES=""
 
 COPY php-fs/Stewardfile /tmp/Stewardfile
-RUN steward -t php-fs /tmp/Stewardfile && clean-tmp
+RUN steward /tmp/Stewardfile && clean-tmp

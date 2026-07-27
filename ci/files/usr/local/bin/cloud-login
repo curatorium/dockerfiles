@@ -1,0 +1,31 @@
+#!/bin/bash -ex
+
+#
+# MySQL password-less login
+envsubst-only-prefix "MYSQL_" < /etc/mysql/conf.d/credentials.cnf.tpl > /etc/mysql/conf.d/credentials.cnf;
+chmod u+rwX,go-rwx /etc/mysql/conf.d/credentials.cnf;
+
+#
+# NewRelic CLI configuration
+envsubst-only-prefix "NEWRELIC_" < /root/.newrelic/credentials.json.tpl > /root/.newrelic/credentials.json;
+envsubst-only-prefix "NEWRELIC_" < /root/.newrelic/default-profile.json.tpl > /root/.newrelic/default-profile.json;
+chmod u+rwX,go-rwx /root/.newrelic/*.json;
+
+#
+# eJSON keys setup
+mkdir -p /opt/ejson/keys/;
+for EJSON_KEY in $(jq -rc 'keys[]' <<< "$EJSON_KEYS"); do
+  jq -rc '.["'$EJSON_KEY'"]' <<<"$EJSON_KEYS" > "/opt/ejson/keys/$EJSON_KEY";
+done
+
+#
+# Docker login
+if [[ ! -z "$DOCKER_USER" ]] && [[ ! -z "$DOCKER_PASS" ]]; then
+   echo "$DOCKER_PASS" | docker login --username "$DOCKER_USER" --password-stdin
+fi
+
+#
+# Provider-specific fragments (e.g. az-ci drops cloud-login-az)
+for script in /usr/local/bin/cloud-login-*; do
+  [ -e "$script" ] && source "$script";
+done
