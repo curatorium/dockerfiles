@@ -74,21 +74,40 @@ As a pipeline runner:
 Each role owns a directory (`<role>/Dockerfile` + `<role>/Stewardfile` +
 `<role>/files/`). `./generate-dockerfile` concatenates the per-role Dockerfiles
 into the root multi-stage `Dockerfile`, so each role is a build target and a
-published tag.
+published tag. Each role's tool set is the live `<role>/Stewardfile`, embedded
+below.
 
 
 ### Base image `curatorium/base:$VERSION`
 ex.: `curatorium/base` or `curatorium/base-26.07` or `curatorium/base-26.07-amd64`
 
 Built on `debian:bookworm-slim` -- the OS foundation shared by every role. No
-PHP, no nginx (those start at `php-base`). Tools:
+PHP, no nginx (those start at `php-base`). Installed by its Stewardfile:
 
-- `tini` (PID 1 / init)
-- `cron`
-- `wait-until`
-- `bash-import`, `bash-test`, `steward`
-- the runtime scripts: `entrypoint`, `service`, `daemonize`, `healthcheck`, `clean-tmp`, `envsubst-only-prefix`, `add-debug`, `add-forensics`
-- `jq`, `gnupg`, `nano`, `less`, `patch`, `sudo`, `unzip`, `locales`, `tzdata`
+```bash
+#!/usr/local/bin/steward
+
+apt cron
+apt gettext-base
+apt gnupg
+apt jq
+apt less
+apt locales
+apt nano
+apt patch
+apt sudo
+apt tini
+apt tzdata
+apt unzip
+
+bin wait-until https://raw.githubusercontent.com/nickjj/wait-until/v0.3.0/wait-until
+bin bash-import https://github.com/curatorium/bash-import/releases/download/v1.0.0-alpha.5/bash-import
+bin bash-test https://github.com/curatorium/bash-import/releases/download/v1.0.0-alpha.5/bash-test
+```
+
+The runtime scripts (`entrypoint`, `service`, `daemonize`, `healthcheck`,
+`clean-tmp`, `envsubst-only-prefix`, `add-debug`, `add-forensics`) are COPY'd
+in from `base/files/`, not steward-installed.
 
 Services are managed by the `service` script (init.d + `start-stop-daemon`, no
 systemd). `$ENABLED_SERVICES` is empty here and defaults to `"php-fpm nginx"` in
@@ -99,44 +118,128 @@ systemd). `$ENABLED_SERVICES` is empty here and defaults to `"php-fpm nginx"` in
 ex.: `curatorium/ci` or `curatorium/ci-26.07` or `curatorium/ci-26.07-amd64`
 
 Extends the base image with PHP-free CLI tooling for pipelines -- preparing
-deployments, rendering configuration, building images:
+deployments, rendering configuration, building images. Installed by its
+Stewardfile:
 
-- `docker` (CLI + `compose` plugin + `buildx` plugin)
-- `kubectl`, `kubelogin`, `kubectl-krew` (+ plugins: `grep`, `exec-cronjob`, `krew`, `slice`, `split-yaml`, `sort-manifests`)
-- `node`, `npm`, `yarn`
-- `ejson`, `ez-cfg` (easy-config), `skeema`, `yq`, `pup`, `gron`, `http` (HTTPie)
-- `q` -- AMD64 only (upstream ships no ARM64 package)
-- `newrelic-cli`
-- `git`, `openssh-client`
-- `mariadb-client`, `redis-tools`, `libmemcached-tools`
-- `7zip`, `bzip2`, `tar`, `xz-utils`, `zip`, `unzip`
+```bash
+#!/usr/local/bin/steward
 
+apt 7zip
+apt bzip2
+apt git
+apt gron
+apt httpie
+apt libfcgi0ldbl
+apt libmemcached-tools
+apt mariadb-client
+apt openssh-client
+apt python3-html2text
+apt redis-tools
+apt tar
+apt unzip
+apt xz-utils
+apt zip
+
+deb https://github.com/shopify/ejson/releases/download/v1.5.2/ejson_1.5.2_linux_$ARCH.deb
+deb https://github.com/skeema/skeema/releases/download/v1.14.1/skeema_$ARCH.deb
+on-amd64 deb https://github.com/harelba/q/releases/download/v3.1.6/q-text-as-data-3.1.6-1.x86_64.deb
+bin yq https://github.com/mikefarah/yq/releases/download/v4.35.2/yq_linux_$ARCH
+zip pup pup https://github.com/ericchiang/pup/releases/download/v0.4.0/pup_v0.4.0_linux_$ARCH.zip
+ext https://download.newrelic.com/install/newrelic-cli/scripts/install.sh bash
+
+# docker
+apt docker-ce-cli
+apt docker-compose-plugin
+apt docker-buildx-plugin
+
+# kubernetes
+KUBECTLVS=1.36.3
+KUBELOGINVS=0.2.19
+bin kubectl https://dl.k8s.io/release/v$KUBECTLVS/bin/linux/$ARCH/kubectl
+zip kubelogin bin/linux_$ARCH/kubelogin https://github.com/Azure/kubelogin/releases/download/v$KUBELOGINVS/kubelogin-linux-$ARCH.zip
+tar kubectl-krew krew-linux_$ARCH https://github.com/kubernetes-sigs/krew/releases/download/v0.5.0/krew-linux_$ARCH.tar.gz
+
+# node
+apt nodejs
+npm yarn
+```
 
 ### Azure CI image `curatorium/az-ci:$VERSION`
 ex.: `curatorium/az-ci` or `curatorium/az-ci-26.07` or `curatorium/az-ci-26.07-amd64`
 
-Extends the CI image with `az` (Azure CLI).
+Extends the CI image with `az` (Azure CLI). Installed by its Stewardfile:
 
+```bash
+#!/usr/local/bin/steward
+
+apt azure-cli
+```
 
 ### PHP base image `curatorium/php-$PHPVS:base-$VERSION`
 ex.: `curatorium/php-8.5:base` or `curatorium/php-8.5:base-26.07` or `curatorium/php-8.5:base-26.07-amd64`
 
-Extends the base image with PHP + nginx. PHP extensions:
+Extends the base image with PHP + nginx. Installed by its Stewardfile:
 
-- `amqp`, `apcu`, `bcmath`, `curl`, `gd`, `http`, `igbinary`, `imagick`,
-  `intl`, `mbstring`, `mongodb`, `msgpack`, `mysql`, `odbc`, `pgsql`,
-  `protobuf`, `raphf`, `readline`, `redis`, `soap`, `sqlite3`, `ssh2`,
-  `stomp`, `xml`, `xsl`, `yaml`, `zip`
-- `timezonedb` -- via pecl
-- `grpc`, `memcached`, `opcache`, `zmq` -- best-effort; skipped where sury has no package (e.g. 8.5)
-- `newrelic` -- AMD64 only, disabled unless `$NEWRELIC_ENABLED` is set
+```bash
+#!/usr/local/bin/steward
 
-Tools:
 
-- `composer`
-- `nginx` (apt + `gettext-base` for envsubst)
-- `php-fpm`
-- image optimisers: `ghostscript`, `imagemagick`, `jpegoptim`, `optipng`, `pngquant`, `gifsicle`
+apt php$PHPVS-amqp
+apt php$PHPVS-apcu
+apt php$PHPVS-bcmath
+apt php$PHPVS-cli
+apt php$PHPVS-common
+apt php$PHPVS-curl
+apt php$PHPVS-fpm
+apt php$PHPVS-gd
+apt php$PHPVS-http
+apt php$PHPVS-igbinary
+apt php$PHPVS-imagick
+apt php$PHPVS-intl
+apt php$PHPVS-mbstring
+apt php$PHPVS-mongodb
+apt php$PHPVS-msgpack
+apt php$PHPVS-mysql
+apt php$PHPVS-odbc
+apt php$PHPVS-pgsql
+apt php$PHPVS-protobuf
+apt php$PHPVS-raphf
+apt php$PHPVS-readline
+apt php$PHPVS-redis
+apt php$PHPVS-soap
+apt php$PHPVS-sqlite3
+apt php$PHPVS-ssh2
+apt php$PHPVS-stomp
+apt php$PHPVS-xml
+apt php$PHPVS-xsl
+apt php$PHPVS-yaml
+apt php$PHPVS-zip
+
+apt --try php$PHPVS-grpc
+apt --try php$PHPVS-memcached
+apt --try php$PHPVS-opcache
+apt --try php$PHPVS-zmq
+
+apt --temp make
+apt --temp php$PHPVS-dev
+apt --temp php-pear
+
+ext https://getcomposer.org/installer php -- --version=2.10.2 --install-dir=/usr/local/bin --filename=composer
+
+# newrelic
+on-amd64 apt newrelic-php5
+
+# image-optimisers
+apt ghostscript
+apt gifsicle
+apt imagemagick
+apt jpegoptim
+apt optipng
+apt pngquant
+
+# nginx
+apt nginx
+```
 
 `$ENABLED_SERVICES` defaults to `"php-fpm nginx"` here and to `""` in
 `php-qa`/`php-fs`; `var-dump` is available but off by default.
@@ -145,51 +248,72 @@ Tools:
 ### PHP QA image `curatorium/php-$PHPVS:qa-$VERSION`
 ex.: `curatorium/php-8.5:qa` or `curatorium/php-8.5:qa-26.07` or `curatorium/php-8.5:qa-26.07-amd64`
 
-Extends the php-base image with PHP extensions:
+Extends the php-base image with QA PHP extensions (installed disabled),
+security scanners, and per-`/opt/<tool>/` composer tools. Installed by its
+Stewardfile:
 
-- `pcov` -- installed, disabled by default
-- `xdebug` -- installed, disabled by default
-- `phpdbg`
+```bash
+#!/usr/local/bin/steward
 
-Security scanners:
+apt git
+apt openssh-client
 
-- `gitleaks` -- secret scanner
-- `snyk`
-- `local-php-security-checker`
+# php-extensions
+apt php$PHPVS-pcov
+apt php$PHPVS-phpdbg
+apt php$PHPVS-xdebug
 
-...and PHP tools, each installed into its own `/opt/<tool>/`:
+# security-scanners
+bin local-php-security-checker https://github.com/fabpot/local-php-security-checker/releases/download/v2.0.6/local-php-security-checker_2.0.6_linux_$ARCH
+on-amd64 bin snyk https://downloads.snyk.io/cli/v1.1306.1/snyk-linux
+on-arm64 bin snyk https://downloads.snyk.io/cli/v1.1306.1/snyk-linux-arm64
+on-amd64 tar gitleaks gitleaks https://github.com/gitleaks/gitleaks/releases/download/v8.21.2/gitleaks_8.21.2_linux_x64.tar.gz
+on-arm64 tar gitleaks gitleaks https://github.com/gitleaks/gitleaks/releases/download/v8.21.2/gitleaks_8.21.2_linux_arm64.tar.gz
 
-- `codecept` (codeception)
-- `composer-require-checker`
-- `composer-unused`
-- `easy-config`
-- `infection`
-- `php-cs-fixer`
-- `phpdcd`
-- `phpinsights`
-- `phplint`
-- `phpmnd`
-- `phpstan` + `phpat`, `ekino/phpstan-banned-code`, `larastan`, `phpstan-symfony`, `phpstan-doctrine`, `phpstan-dba`, `phpstan-deprecation-rules`, `phpstan-beberlei-assert`, `phpstan-todo-by`, `shipmonk/dead-code-detector`
-- `phpunit` + `paratest`
-- `psalm` + `plugin-laravel`, `plugin-symfony`, `doctrine-psalm-plugin`
-- `psysh` -- a much improved PHP interactive shell (+ `laravel/tinker`, `psysh-bundle`)
-- `var-dumper`
-- `git`, `openssh-client`
+# composer-tools
+composer --dir /opt/codecept
+composer --dir /opt/composer-require-checker
+composer --dir /opt/composer-unused
+composer --dir /opt/easy-config
+composer --dir /opt/infection
+composer --dir /opt/php-cs-fixer
+composer --dir /opt/phpdcd
+composer --dir /opt/phpinsights
+composer --dir /opt/phplint
+composer --dir /opt/phpmnd
+composer --dir /opt/phpstan
+composer --dir /opt/phpunit
+composer --dir /opt/psalm
+composer --dir /opt/psysh
+composer --dir /opt/var-dumper
+```
+
+Each composer tool's exact package set (phpstan's rule plugins, psalm's
+plugins, phpunit's paratest, psysh's tinker, ...) is pinned in
+`php-qa/files/opt/*/composer.json`, not the Stewardfile.
 
 
 ### PHP FS image `curatorium/php-$PHPVS:fs-$VERSION`
 ex.: `curatorium/php-8.5:fs` or `curatorium/php-8.5:fs-26.07` or `curatorium/php-8.5:fs-26.07-amd64`
 
-Extends the php-qa image with `nodejs`, `npm`, `npx`, `yarn`, and front-end
-framework CLIs:
+Extends the php-qa image with Node.js and front-end framework CLIs. Installed
+by its Stewardfile:
 
-- `@angular/cli`
-- `@vue/cli`
-- `react-cli`
-- `@ionic/cli`
-- `@symfony/webpack-encore`
-- `laravel-mix`
-- `grunt-cli`
+```bash
+#!/usr/local/bin/steward
+
+apt nodejs
+npm yarn
+
+# framework-clis
+npm @angular/cli
+npm grunt-cli
+npm @ionic/cli
+npm laravel-mix
+npm react-cli
+npm @symfony/webpack-encore
+npm @vue/cli
+```
 
 ----------------------------------------------------------------------
 
