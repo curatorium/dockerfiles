@@ -124,6 +124,7 @@ jobs:
     permissions: {contents: read, id-token: write, attestations: write}
     strategy:
       fail-fast: false
+      max-parallel: 4
       matrix:
         role: [base, ci, az-ci]
     runs-on: ubuntu-24.04
@@ -149,8 +150,14 @@ jobs:
               "$REPO@$A" "$REPO@$B"
 
       - id: index
-        run: |
-          echo "digest=$(docker buildx imagetools inspect "$REPO:$TS" --format '{{json .Manifest.Digest}}' | tr -d '"')" >> "$GITHUB_OUTPUT"
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 15
+          max_attempts: 3
+          command: |
+            digest="$(docker buildx imagetools inspect "$REPO:$TS" --format '{{json .Manifest.Digest}}' | tr -d '"')"
+            [ -n "$digest" ]
+            echo "digest=$digest" >> "$GITHUB_OUTPUT"
       - uses: actions/attest-build-provenance@v2
         with:
           subject-name: docker.io/${{ env.REPO }}
@@ -227,6 +234,7 @@ jobs:
     permissions: {contents: read, id-token: write, attestations: write}
     strategy:
       fail-fast: false
+      max-parallel: 4
       matrix:
         entry: ${{ fromJSON(needs.version.outputs.php) }}
         role: [base, qa, fs]
@@ -254,8 +262,14 @@ jobs:
               "$REPO@$A" "$REPO@$B"
 
       - id: index
-        run: |
-          echo "digest=$(docker buildx imagetools inspect "$REPO:$ROLE-$TS" --format '{{json .Manifest.Digest}}' | tr -d '"')" >> "$GITHUB_OUTPUT"
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 15
+          max_attempts: 3
+          command: |
+            digest="$(docker buildx imagetools inspect "$REPO:$ROLE-$TS" --format '{{json .Manifest.Digest}}' | tr -d '"')"
+            [ -n "$digest" ]
+            echo "digest=$digest" >> "$GITHUB_OUTPUT"
       - uses: actions/attest-build-provenance@v2
         with:
           subject-name: docker.io/${{ env.REPO }}
