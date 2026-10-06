@@ -364,7 +364,7 @@ the commit if a report is stale or a suite fails.
 
 ## CI / publishing
 
-`.github/workflows/build.yml` -- manual `workflow_dispatch` (with a selectable PHP-version subset):
+`.github/workflows/build.yml` -- one target per run (`infra` or one PHP version) via `workflow_dispatch`, `workflow_call` (input `php`), or a weekly schedule (infra Sunday 22:00 UTC, then one PHP version every 2h from Monday 00:00 UTC):
 
 - two families off the generated `Dockerfile`: infra (`base`/`ci`/`az-ci`, no PHP axis) → `curatorium/<role>`, and PHP (`base`/`qa`/`fs` × PHPVS) → `curatorium/php-<PHPVS>:<role>`
 - each job builds its stage on native `amd64`/`arm64` runners (no qemu), runs that role's `tests/<role>.test` against the pushed digest, and pushes by digest with build provenance + an SBOM attestation
