@@ -1,0 +1,10 @@
+name: Build PHP 8.4
+on:
+  schedule: [{cron: '0 8 * * 1'}]
+  workflow_dispatch: ~
+jobs:
+  build:
+    uses: ./.github/workflows/build.yml
+    permissions: {contents: read, id-token: write, attestations: write}
+    with: {php: '8.4', node: '22'}
+    secrets: inherit

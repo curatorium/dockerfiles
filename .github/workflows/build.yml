@@ -1,32 +1,22 @@
 name: Build images
 
-# One target per run: `infra` or a PHP version. Slots are 2h apart, infra first; the PHP images
-# build from the same Dockerfile, so they do not depend on the infra run.
+# Reusable: one target per call, `infra` or a PHP version. The PHP images build from the same
+# Dockerfile, so they do not depend on the infra run.
 on:
-  schedule:
-    - cron: '0 22 * * 0'  # infra
-    - cron: '0 0 * * 1'   # 8.0
-    - cron: '0 2 * * 1'   # 8.1
-    - cron: '0 4 * * 1'   # 8.2
-    - cron: '0 6 * * 1'   # 8.3
-    - cron: '0 8 * * 1'   # 8.4
-    - cron: '0 10 * * 1'  # 8.5
-  workflow_dispatch:
-    inputs:
-      php:
-        description: 'Target to build'
-        type: choice
-        options: [infra, '8.0', '8.1', '8.2', '8.3', '8.4', '8.5']
   workflow_call:
     inputs:
       php:
         description: 'Target to build: infra or a PHP version'
         type: string
         required: true
+      node:
+        description: 'Node major version baked into the php-fs image'
+        type: string
+        required: false
+        default: ''
 
-# The expression map is the cron -> target lookup that the resolver table below also carries.
 concurrency:
-  group: build-${{ inputs.php || fromJSON('{"0 22 * * 0":"infra","0 0 * * 1":"8.0","0 2 * * 1":"8.1","0 4 * * 1":"8.2","0 6 * * 1":"8.3","0 8 * * 1":"8.4","0 10 * * 1":"8.5"}')[github.event.schedule] }}
+  group: build-${{ inputs.php }}
   cancel-in-progress: false
 
 jobs:
@@ -36,9 +26,6 @@ jobs:
     outputs:
       ts: ${{ steps.v.outputs.ts }}
       nodevs: ${{ steps.v.outputs.nodevs }}
-      target: ${{ steps.v.outputs.target }}
-      php: ${{ steps.v.outputs.php }}
-      node: ${{ steps.v.outputs.node }}
     steps:
       - uses: actions/checkout@v4
 
@@ -50,31 +37,16 @@ jobs:
 
       - id: v
         run: |
-          TABLE='[
-            {"target":"infra","cron":"0 22 * * 0"},
-            {"target":"8.0","node":"18","cron":"0 0 * * 1"},
-            {"target":"8.1","node":"18","cron":"0 2 * * 1"},
-            {"target":"8.2","node":"20","cron":"0 4 * * 1"},
-            {"target":"8.3","node":"20","cron":"0 6 * * 1"},
-            {"target":"8.4","node":"22","cron":"0 8 * * 1"},
-            {"target":"8.5","node":"25","cron":"0 10 * * 1"}
-          ]'
-          entry=$(jq -c --arg t '${{ inputs.php }}' --arg c '${{ github.event.schedule }}' \
-            '.[] | select(.target == $t or (($t == "") and .cron == $c))' <<<"$TABLE")
-          [ -n "$entry" ] || { echo "No build target for this trigger"; exit 1; }
-          target=$(jq -r .target <<<"$entry")
           {
             echo "ts=$(date +%y.%m)"
             echo "nodevs=25"
-            echo "target=$target"
-            echo "php=$target"
-            echo "node=$(jq -r '.node // ""' <<<"$entry")"
           } >> "$GITHUB_OUTPUT"
+
 
   infra-build:
     name: Infra build ${{ matrix.role }} ${{ matrix.arch }}
     needs: version
-    if: needs.version.outputs.target == 'infra'
+    if: inputs.php == 'infra'
     permissions: {contents: read, id-token: write, attestations: write}
     strategy:
       fail-fast: false
@@ -140,7 +112,7 @@ jobs:
   infra-merge:
     name: Infra merge ${{ matrix.role }}
     needs: [version, infra-build]
-    if: needs.version.outputs.target == 'infra'
+    if: inputs.php == 'infra'
     permissions: {contents: read, id-token: write, attestations: write}
     strategy:
       fail-fast: false
@@ -177,9 +149,9 @@ jobs:
           push-to-registry: true
 
   php-build:
-    name: Build php-${{ needs.version.outputs.php }} ${{ matrix.role }} ${{ matrix.arch }}
+    name: Build php-${{ inputs.php }} ${{ matrix.role }} ${{ matrix.arch }}
     needs: version
-    if: needs.version.outputs.target != 'infra'
+    if: inputs.php != 'infra'
     permissions: {contents: read, id-token: write, attestations: write}
     strategy:
       fail-fast: false
@@ -188,7 +160,7 @@ jobs:
         arch: [amd64, arm64]
     runs-on: ${{ matrix.arch == 'arm64' && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
     env:
-      REPO: curatorium/php-${{ needs.version.outputs.php }}
+      REPO: curatorium/php-${{ inputs.php }}
       TAG: ${{ matrix.role }}-${{ needs.version.outputs.ts }}-${{ matrix.arch }}
       X_ARCH: ${{ matrix.arch }}
     steps:
@@ -209,8 +181,8 @@ jobs:
           target: php-${{ matrix.role }}
           platforms: linux/${{ matrix.arch }}
           build-args: |
-            PHPVS=${{ needs.version.outputs.php }}
-            ${{ matrix.role == 'fs' && format('NODEVS={0}', needs.version.outputs.node) || '' }}
+            PHPVS=${{ inputs.php }}
+            ${{ matrix.role == 'fs' && format('NODEVS={0}', inputs.node) || '' }}
           provenance: mode=max
           sbom: true
           cache-from: type=registry,ref=${{ env.REPO }}:${{ matrix.role }}-cache-${{ matrix.arch }}
@@ -224,7 +196,7 @@ jobs:
           sudo chmod +x /usr/local/bin/bash-import /usr/local/bin/bash-test
 
       - name: Test
-        run: PHPVS=${{ needs.version.outputs.php }} NODEVS=${{ needs.version.outputs.node }} IMAGE="$REPO@${{ steps.push.outputs.digest }}" bash-test tests/php-${{ matrix.role }}.test
+        run: PHPVS=${{ inputs.php }} NODEVS=${{ inputs.node }} IMAGE="$REPO@${{ steps.push.outputs.digest }}" bash-test tests/php-${{ matrix.role }}.test
 
       - uses: actions/attest-build-provenance@v2
         with:
@@ -234,16 +206,16 @@ jobs:
 
       - run: |
           mkdir -p /tmp/d
-          echo -n "${{ steps.push.outputs.digest }}" > "/tmp/d/digest-${{ needs.version.outputs.php }}-${{ matrix.role }}-${{ matrix.arch }}"
+          echo -n "${{ steps.push.outputs.digest }}" > "/tmp/d/digest-${{ inputs.php }}-${{ matrix.role }}-${{ matrix.arch }}"
       - uses: actions/upload-artifact@v4
         with:
-          name: "digest-${{ needs.version.outputs.php }}-${{ matrix.role }}-${{ matrix.arch }}"
-          path: "/tmp/d/digest-${{ needs.version.outputs.php }}-${{ matrix.role }}-${{ matrix.arch }}"
+          name: "digest-${{ inputs.php }}-${{ matrix.role }}-${{ matrix.arch }}"
+          path: "/tmp/d/digest-${{ inputs.php }}-${{ matrix.role }}-${{ matrix.arch }}"
 
   php-merge:
-    name: Merge php-${{ needs.version.outputs.php }} ${{ matrix.role }}
+    name: Merge php-${{ inputs.php }} ${{ matrix.role }}
     needs: [version, php-build]
-    if: needs.version.outputs.target != 'infra'
+    if: inputs.php != 'infra'
     permissions: {contents: read, id-token: write, attestations: write}
     strategy:
       fail-fast: false
@@ -251,19 +223,19 @@ jobs:
         role: [base, qa, fs]
     runs-on: ubuntu-24.04
     env:
-      REPO: curatorium/php-${{ needs.version.outputs.php }}
+      REPO: curatorium/php-${{ inputs.php }}
       TS: ${{ needs.version.outputs.ts }}
       ROLE: ${{ matrix.role }}
     steps:
       - uses: docker/login-action@v3
         with: {username: "${{ secrets.DOCKERHUB_USERNAME }}", password: "${{ secrets.DOCKERHUB_TOKEN }}"}
       - uses: actions/download-artifact@v4
-        with: {path: /tmp/d, pattern: "digest-${{ needs.version.outputs.php }}-${{ matrix.role }}-*", merge-multiple: true}
+        with: {path: /tmp/d, pattern: "digest-${{ inputs.php }}-${{ matrix.role }}-*", merge-multiple: true}
 
       - name: Merge per-arch digests
         run: |
-          A=$(cat "/tmp/d/digest-${{ needs.version.outputs.php }}-${{ matrix.role }}-amd64")
-          B=$(cat "/tmp/d/digest-${{ needs.version.outputs.php }}-${{ matrix.role }}-arm64")
+          A=$(cat "/tmp/d/digest-${{ inputs.php }}-${{ matrix.role }}-amd64")
+          B=$(cat "/tmp/d/digest-${{ inputs.php }}-${{ matrix.role }}-arm64")
           docker buildx imagetools create \
             -t "$REPO:$ROLE-$TS" -t "$REPO:$ROLE" \
             "$REPO@$A" "$REPO@$B"
