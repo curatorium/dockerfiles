@@ -1,6 +1,6 @@
 name: Build PHP 8.1
 on:
-  schedule: [{cron: '0 2 * * 1'}]
+  schedule: [{cron: '27 2 * * 1'}]
   workflow_dispatch: ~
 jobs:
   build:

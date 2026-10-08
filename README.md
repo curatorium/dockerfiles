@@ -364,7 +364,7 @@ the commit if a report is stale or a suite fails.
 
 ## CI / publishing
 
-Per-target caller workflows `build-infra.yml` and `build-php-<PHPVS>.yml` (each `schedule` + `workflow_dispatch`) call the reusable `.github/workflows/build.yml` (`workflow_call`, inputs `php` and `node`) -- one target per run (`infra` or one PHP version); schedule: infra Sunday 22:00 UTC, then one PHP version every 2h from Monday 00:00 UTC (00:00-10:00):
+Per-target caller workflows `build-infra.yml` and `build-php-<PHPVS>.yml` (each `schedule` + `workflow_dispatch`) call the reusable `.github/workflows/build.yml` (`workflow_call`, inputs `php` and `node`) -- one target per run (`infra` or one PHP version); schedule: infra Sunday 22:07 UTC, then one PHP version every 2h from Monday 00:17 UTC (minutes staggered off the hour: :17, :27, :37, :47, :57, :13):
 
 - two families off the generated `Dockerfile`: infra (`base`/`ci`/`az-ci`, no PHP axis) → `curatorium/<role>`, and PHP (`base`/`qa`/`fs` × PHPVS) → `curatorium/php-<PHPVS>:<role>`
 - each job builds its stage on native `amd64`/`arm64` runners (no qemu), runs that role's `tests/<role>.test` against the pushed digest, and pushes by digest with build provenance + an SBOM attestation
