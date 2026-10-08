@@ -17,7 +17,7 @@ CHANGELOG
 1. Repository adopted into the Curatorium organization (github.com/curatorium/dockerfiles)
 1. Images now published under `curatorium/php-$PHPVS` (the existing `neurony/*` images remain available, frozen)
 1. Builds moved to GitHub Actions on GitHub-hosted native runners (amd64 + arm64, no qemu)
-1. Build and CVE-scan workflows run on demand only (`workflow_dispatch`) -- no scheduled rebuild
+1. Build and CVE-scan workflows run on a weekly cron schedule and on demand (`workflow_dispatch`)
 1. Build matrix is `PHPVS` x role x arch; every job pushes by digest with provenance, an SBOM and a signed attestation
 1. `docker buildx imagetools` joins the per-arch tags into the `:role-$TS` and rolling `:role` manifests
 1. Docker Scout scans the published images and uploads SARIF to the repository's code-scanning tab
