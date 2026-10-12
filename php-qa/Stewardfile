@@ -16,6 +16,51 @@ on-arm64 bin snyk https://downloads.snyk.io/cli/v1.1306.1/snyk-linux-arm64
 on-amd64 tar gitleaks gitleaks https://github.com/gitleaks/gitleaks/releases/download/v8.21.2/gitleaks_8.21.2_linux_x64.tar.gz
 on-arm64 tar gitleaks gitleaks https://github.com/gitleaks/gitleaks/releases/download/v8.21.2/gitleaks_8.21.2_linux_arm64.tar.gz
 
+# PHP 8.0 resolves only to laravel 8 / symfony 4 / flysystem 1 chains, all flagged by advisories.
+PHP80_ADVISORIES=(
+    PKSA-17kp-jm2n-vxzz
+    PKSA-1q6p-sqkj-8mmj
+    PKSA-324d-pqmd-hptz
+    PKSA-365x-2zjk-pt47
+    PKSA-3qhw-gzjt-j63j
+    PKSA-3r5d-mb8f-1qw9
+    PKSA-7ywf-hktb-jkn9
+    PKSA-8qx3-n5y5-vvnd
+    PKSA-9q1p-3s19-bp1q
+    PKSA-9w98-4rwq-spxr
+    PKSA-b35n-565h-rs4q
+    PKSA-cn77-7mny-v9zg
+    PKSA-d5tc-s1qs-h781
+    PKSA-dpt9-7cmv-dk65
+    PKSA-dr6c-z2rf-wh36
+    PKSA-f8b8-pbjy-s9k8
+    PKSA-fndg-qryc-dyc9
+    PKSA-m2dq-1fhr-29b1
+    PKSA-m5cs-t1y6-qpcs
+    PKSA-mc58-w91n-f5gv
+    PKSA-md26-zdw9-222r
+    PKSA-mhj3-vthf-h41n
+    PKSA-njrm-6dtg-m2pc
+    PKSA-nqj4-v43p-2gxc
+    PKSA-nrj3-r2wg-yt8b
+    PKSA-nv44-1b4d-6gjg
+    PKSA-pwh8-d4fr-nywn
+    PKSA-rhzp-d9k8-shyq
+    PKSA-rqc2-tcc6-nc79
+    PKSA-scnn-p8mm-jbft
+    PKSA-t21r-vtr5-3mdz
+    PKSA-t4rz-hp2g-57t1
+    PKSA-tf6z-kynr-311v
+    PKSA-vhvj-tvg4-96jj
+    PKSA-w7xr-vk7n-rstm
+    PKSA-w9tt-7782-78jx
+    PKSA-xf4x-p5c1-z9xq
+    PKSA-zyf5-hrxv-hrd7
+)
+[[ "$PHPVS" != 8.0 ]] || for f in /opt/*/composer.json; do
+    jq '.config.audit.ignore += $ARGS.positional' "$f" --args "${PHP80_ADVISORIES[@]}" > /tmp/composer.json && mv /tmp/composer.json "$f"
+done
+
 # composer-tools
 composer --dir /opt/codecept
 composer --dir /opt/composer-require-checker
