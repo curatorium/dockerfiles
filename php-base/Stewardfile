@@ -3,6 +3,8 @@
 key php https://packages.sury.org/php/apt.gpg
 src php https://packages.sury.org/php/ bookworm main
 
+# Listed explicitly so apt upgrades a stale copy left by any parent layer (CVE-2026-111497).
+apt libbrotli1
 apt php$PHPVS-amqp
 apt php$PHPVS-apcu
 apt php$PHPVS-bcmath
