@@ -28,11 +28,18 @@ jobs:
       - uses: docker/login-action@v3
         with: {username: "${{ secrets.DOCKERHUB_USERNAME }}", password: "${{ secrets.DOCKERHUB_TOKEN }}"}
 
-      - uses: docker/scout-action@v1
-        with:
-          command: cves
-          image: curatorium/php-${{ matrix.php }}:${{ matrix.role }}
-          sarif-file: scout-${{ matrix.php }}-${{ matrix.role }}.sarif
+      # docker/scout-action downloads its binary from GitHub unauthenticated and 403s on the
+      # anonymous rate limit (docker/scout-action#116); the scout-cli image comes from Docker Hub.
+      - name: Scan
+        run: |
+          cfg="$RUNNER_TEMP/docker" && mkdir -p "$cfg" && cp ~/.docker/config.json "$cfg/"
+          docker run --rm -u "$(id -u):$(id -g)" -e HOME=/tmp -e DOCKER_CONFIG=/docker \
+            -v "$cfg:/docker" -v "$PWD:/out" \
+            docker/scout-cli:1.30.0 cves "registry://curatorium/php-$PHPVS:$ROLE" \
+            --format sarif --output "/out/scout-$PHPVS-$ROLE.sarif"
+        env:
+          PHPVS: ${{ matrix.php }}
+          ROLE: ${{ matrix.role }}
 
       - uses: github/codeql-action/upload-sarif@v3
         with:
