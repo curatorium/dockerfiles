@@ -180,6 +180,7 @@ jobs:
           file: Dockerfile
           target: php-${{ matrix.role }}
           platforms: linux/${{ matrix.arch }}
+          secrets: github_token=${{ github.token }}
           build-args: |
             PHPVS=${{ inputs.php }}
             ${{ matrix.role == 'fs' && format('NODEVS={0}', inputs.node) || '' }}
